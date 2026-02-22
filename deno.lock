@@ -10,10 +10,11 @@
     "npm:@types/node@*": "24.1.0",
     "npm:@types/pouchdb@*": "6.4.2",
     "npm:@types/pouchdb@^6.4.2": "6.4.2",
+    "npm:brace-expansion@^2.0.2": "2.0.2",
     "npm:chokidar@^3.5.1": "3.6.0",
     "npm:diff-match-patch@^1.0.5": "1.0.5",
     "npm:fflate@~0.8.2": "0.8.2",
-    "npm:minimatch@*": "10.0.1",
+    "npm:minimatch@^10.0.1": "10.1.2",
     "npm:octagonal-wheels@~0.1.39": "0.1.39",
     "npm:pouchdb-adapter-http@9": "9.0.0",
     "npm:pouchdb-core@9": "9.0.0",
@@ -44,6 +45,15 @@
     }
   },
   "npm": {
+    "@isaacs/balanced-match@4.0.1": {
+      "integrity": "sha512-yzMTt9lEb8Gv7zRioUilSglI0c0smZ9k5D65677DLWLtWJaXIS3CqcGyUFByYKlnUj6TkjLVs54fBl6+TiGQDQ=="
+    },
+    "@isaacs/brace-expansion@5.0.1": {
+      "integrity": "sha512-WMz71T1JS624nWj2n2fnYAuPovhv7EUhk69R6i9dsVyzxt5eM3bjwvgk9L+APE1TRscGysAVMANkB0jh0LQZrQ==",
+      "dependencies": [
+        "@isaacs/balanced-match"
+      ]
+    },
     "@types/debug@4.1.12": {
       "integrity": "sha512-vIChWdVG3LG1SMxEvI/AK+FWJthlrqlTu7fbrlywTkkaONwk/UAGaULXRlf8vkzFBLVm0zkMdCquhL5aOjhXPQ==",
       "dependencies": [
@@ -204,8 +214,8 @@
     "binary-extensions@2.3.0": {
       "integrity": "sha512-Ceh+7ox5qe7LJuLHoY0feh3pHuUDHAcRUeyL2VYghZwfpkNIy/+8Ocg0a3UuSoYzavmylwuLWQOf3hl0jjMMIw=="
     },
-    "brace-expansion@2.0.1": {
-      "integrity": "sha512-XnAIvQ8eM+kC6aULx6wuQiwVsnzsi9d3WxzV3FpWTGA19F621kwdbsAcFKXgKUHZWsy+mY6iL1sHTxWEFCytDA==",
+    "brace-expansion@2.0.2": {
+      "integrity": "sha512-Jt0vHyM+jmUBqojB7E1NIYadt0vI0Qxjxd2TErW94wDz+E2LAm5vKMXXwg6ZZBTHPuUlDgQHKXvjGBdfcF1ZDQ==",
       "dependencies": [
         "balanced-match"
       ]
@@ -282,10 +292,10 @@
     "is-number@7.0.0": {
       "integrity": "sha512-41Cifkg6e8TylSpdtTpeLVMqvSBEVzTttHvERD741+pnZ8ANv0004MRL43QKPDlK9cGvNp6NZWZUBlbGXYxxng=="
     },
-    "minimatch@10.0.1": {
-      "integrity": "sha512-ethXTt3SGGR+95gudmqJ1eNhRO7eGEGIgYA9vnPatK4/etz2MEVDno5GMCibdMTuBMyElzIlgxMna3K94XDIDQ==",
+    "minimatch@10.1.2": {
+      "integrity": "sha512-fu656aJ0n2kcXwsnwnv9g24tkU5uSmOlTjd6WyyaKm2Z+h1qmY6bAjrcaIxF/BslFqbZ8UBtbJi7KgQOZD2PTw==",
       "dependencies": [
-        "brace-expansion"
+        "@isaacs/brace-expansion"
       ]
     },
     "node-fetch@2.6.9": {
@@ -531,10 +541,11 @@
       "jsr:@std/path@^1.0.9",
       "npm:@types/diff-match-patch@^1.0.36",
       "npm:@types/pouchdb@^6.4.2",
+      "npm:brace-expansion@^2.0.2",
       "npm:chokidar@^3.5.1",
       "npm:diff-match-patch@^1.0.5",
       "npm:fflate@~0.8.2",
-      "npm:minimatch@*",
+      "npm:minimatch@^10.0.1",
       "npm:octagonal-wheels@~0.1.39",
       "npm:pouchdb-adapter-http@9",
       "npm:pouchdb-core@9",

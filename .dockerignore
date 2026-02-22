@@ -3,3 +3,8 @@ vault*/*
 !.gitempty
 *.log
 node_modules
+BUILD.md
+readme.md
+docker-compose.yml
+script/
+spdx-json

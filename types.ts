@@ -11,6 +11,7 @@ export interface PeerStorageConf {
     group?: string;
     name: string;
     baseDir: string;
+    ignorePaths?: string[];
     processor?: {
         cmd: string,
         args: string[]

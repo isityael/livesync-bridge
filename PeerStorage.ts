@@ -30,6 +30,12 @@ export class PeerStorage extends Peer {
             await Deno.remove(path);
             this.receiveLog(` ${path} deleted`);
         } catch (ex) {
+            // Deletions can race (e.g., the file was already removed locally).
+            // Treat ENOENT as success to avoid noisy crash-like logs.
+            if (ex instanceof Deno.errors.NotFound) {
+                this.receiveLog(` ${path} already deleted`);
+                return true;
+            }
             this.receiveLog(` ${path} delete failed`, LOG_LEVEL_NOTICE);
             Logger(ex, LOG_LEVEL_VERBOSE);
             return false;
@@ -50,7 +56,7 @@ export class PeerStorage extends Peer {
                 await Deno.mkdir(dirName, { recursive: true });
             } catch (ex) {
                 // While recursive is true, mkdir will not raise the `AlreadyExist`.
-                console.log(ex);
+                Logger(ex, LOG_LEVEL_NOTICE);
             }
             const fp = await Deno.open(path, { read: true, write: true, create: true });
             if (data.data instanceof Uint8Array) {
@@ -134,12 +140,20 @@ export class PeerStorage extends Peer {
     async get(pathSrc: string): Promise<false | FileData> {
         const lp = this.toLocalPath(pathSrc);
         const path = this.toStoragePath(lp);
-        const stat = await Deno.stat(path);
+        let stat: Deno.FileInfo;
+        try {
+            stat = await Deno.stat(path);
+        } catch (ex) {
+            if (ex instanceof Deno.errors.NotFound) {
+                return false;
+            }
+            throw ex;
+        }
         if (!stat.isFile) {
             return false;
         }
         const ret: FileData = {
-            ctime: stat.mtime?.getTime() ?? 0,
+            ctime: stat.birthtime?.getTime() ?? stat.mtime?.getTime() ?? 0,
             mtime: stat.mtime?.getTime() ?? 0,
             size: stat.size,
             data: [],
@@ -153,9 +167,51 @@ export class PeerStorage extends Peer {
     }
     watcher?: chokidar.FSWatcher;
 
+    private globToRegex(glob: string): RegExp {
+        const escaped = glob.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*");
+        return new RegExp(`^${escaped}$`);
+    }
+
+    private shouldIgnoreRelativePath(relativePath: string): boolean {
+        const patterns = this.config.ignorePaths ?? [];
+        if (patterns.length === 0) return false;
+
+        const normalizedPath = this.toPosixPath(relativePath).replace(/^\/+/, "");
+        const segments = normalizedPath.split("/").filter(Boolean);
+        if (segments.length === 0) return false;
+
+        for (const rawPattern of patterns) {
+            const pattern = rawPattern.trim().replace(/^\.\/+/, "").replace(/\/+$/, "");
+            if (!pattern) continue;
+            const matcher = this.globToRegex(pattern);
+
+            // If pattern contains path separators, match against full relative path.
+            if (pattern.includes("/")) {
+                if (matcher.test(normalizedPath)) return true;
+                continue;
+            }
+
+            // Segment-level matching (e.g. ".git", "node_modules", "*.tmp").
+            if (segments.some((segment) => matcher.test(segment))) return true;
+        }
+
+        return false;
+    }
+
+    private shouldIgnoreAbsolutePath(pathAbs: string): boolean {
+        const lP = this.toStoragePath(this.toLocalPath("."));
+        const relPath = this.toPosixPath(relative(lP, pathAbs));
+        if (!relPath || relPath === ".") return false;
+        if (relPath.startsWith("..")) return true;
+        return this.shouldIgnoreRelativePath(relPath);
+    }
+
     async dispatch(pathSrc: string) {
         const lP = this.toStoragePath(this.toLocalPath("."));
         const path = this.toPosixPath(relative(lP, pathSrc));
+        if (this.shouldIgnoreRelativePath(path)) {
+            return;
+        }
 
         const data = await this.get(path);
 
@@ -177,6 +233,9 @@ export class PeerStorage extends Peer {
     async dispatchDeleted(pathSrc: string) {
         const lP = this.toStoragePath(this.toLocalPath("."));
         const path = this.toPosixPath(relative(lP, pathSrc));
+        if (this.shouldIgnoreRelativePath(path)) {
+            return;
+        }
         await scheduleOnceIfDuplicated(pathSrc, async () => {
             await delay(250);
             if (!await this.isRepeating(path, false)) {
@@ -232,6 +291,9 @@ export class PeerStorage extends Peer {
 
     processFile(event: Deno.FsEvent) {
         for (const path of event.paths) {
+            if (this.shouldIgnoreAbsolutePath(path)) {
+                continue;
+            }
             const key = `${event.kind}-${path}`;
             // const key = path;
             scheduleTask(key, 100, async () => {
@@ -260,6 +322,9 @@ export class PeerStorage extends Peer {
             for await (const entry of walk(lP)) {
                 if (entry.isFile) {
                     const ePath = this.toPosixPath(relative(this.toLocalPath("."), entry.path));
+                    if (this.shouldIgnoreRelativePath(ePath)) {
+                        continue;
+                    }
                     if (await this.isChanged(ePath)) {
                         this.debugLog(`Offline changes detected: ${ePath}`);
                         await this.dispatch(entry.path);
@@ -293,6 +358,7 @@ export class PeerStorage extends Peer {
         this.watcher = chokidar.watch(lP,
             {
                 ignoreInitial: !this.config.scanOfflineChanges,
+                ignored: (path) => this.shouldIgnoreAbsolutePath(String(path)),
                 awaitWriteFinish: {
                     stabilityThreshold: 500,
                 },

@@ -1,7 +1,7 @@
 import { join as joinPosix } from "jsr:@std/path/posix";
 import type { FileInfo } from "./lib/src/API/DirectFileManipulatorV2.ts";
 
-import { FilePathWithPrefix, LOG_LEVEL, LOG_LEVEL_DEBUG, LOG_LEVEL_INFO } from "./lib/src/common/types.ts";
+import { FilePathWithPrefix, LOG_LEVEL, LOG_LEVEL_DEBUG, LOG_LEVEL_INFO, LOG_LEVEL_NOTICE } from "./lib/src/common/types.ts";
 import { PeerConf, FileData } from "./types.ts";
 import { Logger } from "octagonal-wheels/common/logger.js";
 import { LRUCache } from "octagonal-wheels/memory/LRUCache.js"
@@ -62,15 +62,64 @@ export abstract class Peer {
     _getKey(key: string) {
         return `${this.config.name}-${this.config.type}-${this.config.baseDir}-${key}`;
     }
+    private isMalformedLocalStorageError(error: unknown): boolean {
+        if (!(error instanceof Error)) {
+            return false;
+        }
+        return error.message.toLowerCase().includes("database disk image is malformed");
+    }
+    private resetLocalStorage(): boolean {
+        try {
+            localStorage.clear();
+            return true;
+        } catch (error) {
+            this.normalLog(`Failed to reset localStorage: ${error instanceof Error ? error.message : String(error)}`, LOG_LEVEL_NOTICE);
+            return false;
+        }
+    }
     setSetting(key: string, value: string) {
-        return localStorage.setItem(this._getKey(key), value);
+        const storageKey = this._getKey(key);
+        try {
+            return localStorage.setItem(storageKey, value);
+        } catch (error) {
+            if (!this.isMalformedLocalStorageError(error)) {
+                throw error;
+            }
+            this.normalLog(
+                `Malformed localStorage detected while writing "${storageKey}". Resetting local state and retrying.`,
+                LOG_LEVEL_NOTICE,
+            );
+            if (!this.resetLocalStorage()) {
+                throw error;
+            }
+            return localStorage.setItem(storageKey, value);
+        }
     }
     getSetting(key: string) {
-        return localStorage.getItem(this._getKey(key));
+        const storageKey = this._getKey(key);
+        try {
+            return localStorage.getItem(storageKey);
+        } catch (error) {
+            if (!this.isMalformedLocalStorageError(error)) {
+                throw error;
+            }
+            this.normalLog(
+                `Malformed localStorage detected while reading "${storageKey}". Resetting local state and returning empty value.`,
+                LOG_LEVEL_NOTICE,
+            );
+            if (!this.resetLocalStorage()) {
+                return null;
+            }
+            try {
+                return localStorage.getItem(storageKey);
+            } catch (_retryError) {
+                return null;
+            }
+        }
     }
     compareDate(a: FileInfo, b: FileInfo) {
-        const aMTime = ~~(a?.mtime ?? 0 / 1000);
-        const bMTime = ~~(b?.mtime ?? 0 / 1000);
+        const aMTime = ~~((a?.mtime ?? 0) / 1000);
+        const bMTime = ~~((b?.mtime ?? 0) / 1000);
         return aMTime - bMTime;
     }
 }
