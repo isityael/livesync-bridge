@@ -55,7 +55,7 @@ steps:
       build_args:
         - "COMMIT_SHA=${CI_COMMIT_SHA}"
       cache_images:
-        - harbor.m0sh1.cc/apps/livesync-bridge:cache
+        - harbor.m0sh1.cc/cache/livesync-bridge:buildkit
 
   - name: trivy-scan
     image: harbor.m0sh1.cc/dhi/trivy:0.69.1-debian13-dev
