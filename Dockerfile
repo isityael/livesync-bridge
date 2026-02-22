@@ -15,8 +15,9 @@ COPY deno.jsonc deno.lock ./
 COPY main.ts Hub.ts Peer.ts PeerCouchDB.ts PeerStorage.ts types.ts util.ts ./
 COPY lib ./lib
 
-# Note: --allow-import required by Deno 2.6.8+ for stricter import policy.
-RUN deno cache --allow-import --frozen --lock=deno.lock main.ts \
+# Install npm deps from lock file, then cache all modules.
+RUN deno install --allow-import --frozen --lock=deno.lock \
+  && deno cache --allow-import --frozen --lock=deno.lock main.ts \
   && mkdir -p /app/data /app/dat
 
 # Stage 2: Runtime
