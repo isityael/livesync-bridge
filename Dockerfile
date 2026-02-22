@@ -29,6 +29,7 @@ ENV DENO_DIR=/deno-dir \
     DENO_NO_PROMPT=1
 
 COPY --from=builder --chown=1000:1000 /deno-dir /deno-dir
+COPY --from=builder --chown=1000:1000 /app/node_modules /app/node_modules
 COPY --from=builder --chown=1000:1000 /app/deno.jsonc /app/deno.lock /app/
 COPY --from=builder --chown=1000:1000 /app/main.ts /app/Hub.ts /app/Peer.ts /app/PeerCouchDB.ts /app/PeerStorage.ts /app/types.ts /app/util.ts /app/
 COPY --from=builder --chown=1000:1000 /app/lib /app/lib
