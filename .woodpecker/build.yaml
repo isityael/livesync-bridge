@@ -85,6 +85,7 @@ steps:
     image: harbor.m0sh1.cc/dhi/cosign:3.0.5-debian13-dev
     environment:
       IMAGE_REF: harbor.m0sh1.cc/apps/livesync-bridge:${CI_COMMIT_SHA:0:8}
+      COSIGN_EXPERIMENTAL: "1"
       COSIGN_KEY:
         from_secret: cosign_key
       COSIGN_PASSWORD:
