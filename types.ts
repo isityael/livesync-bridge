@@ -13,9 +13,9 @@ export interface PeerStorageConf {
     baseDir: string;
     ignorePaths?: string[];
     processor?: {
-        cmd: string,
-        args: string[]
-    }
+        cmd: string;
+        args: string[];
+    };
     useChokidar?: boolean;
 }
 export interface PeerCouchDBConf extends DirectFileManipulatorOptions {
@@ -34,8 +34,6 @@ export interface PeerCouchDBConf extends DirectFileManipulatorOptions {
     baseDir: string;
 }
 
-
-
 export function isCouchDBPeer(peer: PeerConf): peer is PeerCouchDBConf {
     return peer.type == "couchdb";
 }
@@ -50,4 +48,4 @@ export type FileData = {
     size: number;
     data: string[] | Uint8Array<ArrayBuffer>;
     deleted?: boolean;
-}
+};

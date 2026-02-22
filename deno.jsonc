@@ -30,9 +30,21 @@
         "chokidar": "npm:chokidar@^3.5.1"
     },
     "lint": {
+        "include": ["*.ts"],
+        "exclude": ["lib/"],
         "rules": {
-            "exclude": ["no-explicit-any", "ban-ts-comment"]
+            "exclude": [
+                "no-explicit-any",
+                "ban-ts-comment",
+                "no-import-prefix",
+                "no-unversioned-import"
+            ]
         }
+    },
+    "fmt": {
+        "include": ["*.ts", "deno.jsonc"],
+        "exclude": ["lib/"],
+        "indentWidth": 4
     },
     "nodeModulesDir": "manual",
     "unstable": ["bare-node-builtins", "sloppy-imports", "byonm"]

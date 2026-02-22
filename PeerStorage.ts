@@ -1,20 +1,23 @@
-import { LOG_LEVEL_INFO, LOG_LEVEL_NOTICE, LOG_LEVEL_VERBOSE } from "./lib/src/common/types.ts";
-import { PeerStorageConf, FileData } from "./types.ts";
+import {
+    LOG_LEVEL_INFO,
+    LOG_LEVEL_NOTICE,
+    LOG_LEVEL_VERBOSE,
+} from "./lib/src/common/types.ts";
+import { FileData, PeerStorageConf } from "./types.ts";
 import { Logger } from "./lib/src/common/logger.ts";
 import { delay, getDocData } from "./lib/src/common/utils.ts";
 import { isPlainText } from "./lib/src/string_and_binary/path.ts";
-import { parse, format, relative, dirname, resolve } from "@std/path";
-import { format as posixFormat, parse as posixParse } from "@std/path/posix"
+import { dirname, format, parse, relative, resolve } from "@std/path";
+import { format as posixFormat, parse as posixParse } from "@std/path/posix";
 import { scheduleOnceIfDuplicated } from "octagonal-wheels/concurrency/lock";
 import { DispatchFun, Peer } from "./Peer.ts";
 import chokidar from "chokidar";
-import { walk } from 'fs/walk';
+import { walk } from "fs/walk";
 
 import { scheduleTask } from "octagonal-wheels/concurrency/task";
 
 export class PeerStorage extends Peer {
     declare config: PeerStorageConf;
-
 
     constructor(conf: PeerStorageConf, dispatcher: DispatchFun) {
         super(conf, dispatcher);
@@ -58,12 +61,18 @@ export class PeerStorage extends Peer {
                 // While recursive is true, mkdir will not raise the `AlreadyExist`.
                 Logger(ex, LOG_LEVEL_NOTICE);
             }
-            const fp = await Deno.open(path, { read: true, write: true, create: true });
+            const fp = await Deno.open(path, {
+                read: true,
+                write: true,
+                create: true,
+            });
             if (data.data instanceof Uint8Array) {
                 const writtensize = await fp.write(data.data);
                 await fp.truncate(writtensize);
             } else {
-                const writtensize = await fp.write(new TextEncoder().encode(getDocData(data.data)));
+                const writtensize = await fp.write(
+                    new TextEncoder().encode(getDocData(data.data)),
+                );
                 await fp.truncate(writtensize);
             }
             await fp.utime(new Date(data.mtime), new Date(data.mtime));
@@ -88,23 +97,27 @@ export class PeerStorage extends Peer {
             // const startDate = new Date();
             const cmd = this.config.processor.cmd;
             const mode = isDeleted ? "deleted" : "modified";
-            const args = this.config.processor.args.map(e => {
+            const args = this.config.processor.args.map((e) => {
                 if (e == "$filename") return filename;
                 if (e == "$mode") return mode;
-                return e
+                return e;
             });
             // const dateStr = startDate.toLocaleString();
-            const scriptLineMessage = `Script: called ${cmd} with args ${JSON.stringify(args)}`;
-            this.normalLog(`Processor : ${scriptLineMessage}`)
+            const scriptLineMessage = `Script: called ${cmd} with args ${
+                JSON.stringify(args)
+            }`;
+            this.normalLog(`Processor : ${scriptLineMessage}`);
             const command = new Deno.Command(
-                cmd, {
-                args: args,
-                cwd: ".",
-                env: {
-                    filename: filename,
-                    mode: mode
-                }
-            });
+                cmd,
+                {
+                    args: args,
+                    cwd: ".",
+                    env: {
+                        filename: filename,
+                        mode: mode,
+                    },
+                },
+            );
             // const start = performance.now();
             const { code, stdout, stderr } = await command.output();
             // const end = performance.now();
@@ -113,11 +126,13 @@ export class PeerStorage extends Peer {
             // result.push(`# Processor called: ${dateStr}\n`);
             // result.push(`command: \`${scriptLineMessage}\``);
             if (code === 0) {
-                this.normalLog("Processor called: Performed successfully.")
+                this.normalLog("Processor called: Performed successfully.");
                 // result.push("Processor called: Performed successfully.")
                 this.normalLog(stdoutText);
             } else {
-                this.normalLog("Processor called: Performed but with some errors.")
+                this.normalLog(
+                    "Processor called: Performed but with some errors.",
+                );
                 // result.push("Processor called: Performed but with some errors.")
                 this.normalLog(stderrText, LOG_LEVEL_NOTICE);
             }
@@ -129,12 +144,11 @@ export class PeerStorage extends Peer {
             // const strResult = result.join("\n");
             return true;
         } catch (ex) {
-            this.normalLog("Processor: Error on processing");;
+            this.normalLog("Processor: Error on processing");
             // this.normalLog(ex);
             this.normalLog(JSON.stringify(ex, null, 2));
             return false;
         }
-
     }
 
     async get(pathSrc: string): Promise<false | FileData> {
@@ -168,7 +182,10 @@ export class PeerStorage extends Peer {
     watcher?: chokidar.FSWatcher;
 
     private globToRegex(glob: string): RegExp {
-        const escaped = glob.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*");
+        const escaped = glob.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(
+            /\*/g,
+            ".*",
+        );
         return new RegExp(`^${escaped}$`);
     }
 
@@ -176,12 +193,18 @@ export class PeerStorage extends Peer {
         const patterns = this.config.ignorePaths ?? [];
         if (patterns.length === 0) return false;
 
-        const normalizedPath = this.toPosixPath(relativePath).replace(/^\/+/, "");
+        const normalizedPath = this.toPosixPath(relativePath).replace(
+            /^\/+/,
+            "",
+        );
         const segments = normalizedPath.split("/").filter(Boolean);
         if (segments.length === 0) return false;
 
         for (const rawPattern of patterns) {
-            const pattern = rawPattern.trim().replace(/^\.\/+/, "").replace(/\/+$/, "");
+            const pattern = rawPattern.trim().replace(/^\.\/+/, "").replace(
+                /\/+$/,
+                "",
+            );
             if (!pattern) continue;
             const matcher = this.globToRegex(pattern);
 
@@ -243,7 +266,6 @@ export class PeerStorage extends Peer {
                 await this.dispatchToHub(this, this.toGlobalPath(path), false);
             }
         });
-
     }
 
     toPosixPath(path: string) {
@@ -309,19 +331,25 @@ export class PeerStorage extends Peer {
         }
     }
 
-
-
     async startDenoFsWatch(): Promise<void> {
         if (this.watcherDeno) {
             this.watcherDeno.close();
             this.watcherDeno = undefined;
         }
         const lP = this.toStoragePath(this.toLocalPath("."));
-        this.normalLog(`Scan offline changes: ${this.config.scanOfflineChanges ? "Enabled, now starting..." : "Disabled"}`);
+        this.normalLog(
+            `Scan offline changes: ${
+                this.config.scanOfflineChanges
+                    ? "Enabled, now starting..."
+                    : "Disabled"
+            }`,
+        );
         if (this.config.scanOfflineChanges) {
             for await (const entry of walk(lP)) {
                 if (entry.isFile) {
-                    const ePath = this.toPosixPath(relative(this.toLocalPath("."), entry.path));
+                    const ePath = this.toPosixPath(
+                        relative(this.toLocalPath("."), entry.path),
+                    );
                     if (this.shouldIgnoreRelativePath(ePath)) {
                         continue;
                     }
@@ -332,15 +360,13 @@ export class PeerStorage extends Peer {
                 }
             }
         }
-        this.watcherDeno = Deno.watchFs(lP,
-            {
-                recursive: true,
-            });
+        this.watcherDeno = Deno.watchFs(lP, {
+            recursive: true,
+        });
 
         for await (const event of this.watcherDeno) {
             this.processFile(event);
         }
-
     }
     async start() {
         // For addressing Deno's and chokidar's compatibility issues (especially on Windows), we use Deno's fs watcher as the primary watcher.
@@ -354,39 +380,50 @@ export class PeerStorage extends Peer {
             this.watcher = undefined;
         }
         const lP = this.toStoragePath(this.toLocalPath("."));
-        this.normalLog(`Scan offline changes: ${this.config.scanOfflineChanges ? "Enabled, now starting..." : "Disabled"}`);
-        this.watcher = chokidar.watch(lP,
-            {
-                ignoreInitial: !this.config.scanOfflineChanges,
-                ignored: (path) => this.shouldIgnoreAbsolutePath(String(path)),
-                awaitWriteFinish: {
-                    stabilityThreshold: 500,
-                },
-            });
+        this.normalLog(
+            `Scan offline changes: ${
+                this.config.scanOfflineChanges
+                    ? "Enabled, now starting..."
+                    : "Disabled"
+            }`,
+        );
+        this.watcher = chokidar.watch(lP, {
+            ignoreInitial: !this.config.scanOfflineChanges,
+            ignored: (path) => this.shouldIgnoreAbsolutePath(String(path)),
+            awaitWriteFinish: {
+                stabilityThreshold: 500,
+            },
+        });
 
         this.watcher.on("change", async (path) => {
-            const ePath = this.toPosixPath(relative(this.toLocalPath("."), path));
+            const ePath = this.toPosixPath(
+                relative(this.toLocalPath("."), path),
+            );
             if (!await this.isChanged(ePath)) {
                 // this.debugLog(`Not changed: ${ePath}`);
             } else {
                 this.debugLog(`Changes detected: ${ePath}`);
                 await this.dispatch(path);
             }
-        })
+        });
         this.watcher.on("add", async (path) => {
-            const ePath = this.toPosixPath(relative(this.toLocalPath("."), path));
+            const ePath = this.toPosixPath(
+                relative(this.toLocalPath("."), path),
+            );
             if (!await this.isChanged(ePath)) {
                 // this.debugLog(`Not changed: ${ePath}`);
             } else {
                 this.debugLog(`New detected: ${ePath}`);
                 await this.dispatch(path);
             }
-        })
+        });
         this.watcher.on("unlink", async (path) => {
-            const ePath = this.toPosixPath(relative(this.toLocalPath("."), path));
+            const ePath = this.toPosixPath(
+                relative(this.toLocalPath("."), path),
+            );
             this.debugLog(`Unlink detected: ${ePath}`);
-            await this.dispatchDeleted(path)
-        })
+            await this.dispatchDeleted(path);
+        });
     }
     async stop() {
         this.watcher?.close();

@@ -3,7 +3,6 @@ import { Peer } from "./Peer.ts";
 import { PeerStorage } from "./PeerStorage.ts";
 import { PeerCouchDB } from "./PeerCouchDB.ts";
 
-
 export class Hub {
     conf: Config;
     peers = [] as Peer[];
@@ -23,7 +22,11 @@ export class Hub {
                 const p = new PeerStorage(peer, this.dispatch.bind(this));
                 this.peers.push(p);
             } else {
-                throw new Error(`Unexpected Peer type: ${(peer as any)?.name} - ${(peer as any)?.type}`);
+                throw new Error(
+                    `Unexpected Peer type: ${(peer as any)?.name} - ${
+                        (peer as any)?.type
+                    }`,
+                );
             }
         }
         for (const p of this.peers) {
@@ -33,7 +36,10 @@ export class Hub {
 
     async dispatch(source: Peer, path: string, data: FileData | false) {
         for (const peer of this.peers) {
-            if (peer !== source && (source.config.group ?? "") === (peer.config.group ?? "")) {
+            if (
+                peer !== source &&
+                (source.config.group ?? "") === (peer.config.group ?? "")
+            ) {
                 let ret = false;
                 if (data === false) {
                     ret = await peer.delete(path);
@@ -49,4 +55,3 @@ export class Hub {
         }
     }
 }
-

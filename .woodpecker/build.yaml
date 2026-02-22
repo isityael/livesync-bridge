@@ -1,0 +1,98 @@
+# LiveSync Bridge — Deno-based CouchDB sync bridge for Basic Memory
+# Pushes to: harbor.m0sh1.cc/apps/livesync-bridge
+#
+# This pipeline runs in the standalone livesync-bridge repo (sm-moshi/livesync-bridge).
+# The infra-cli parent repo has a mirror pipeline triggered by submodule pointer updates.
+when:
+  - event: manual
+  - event: push
+    branch: main
+
+steps:
+  - name: deno-lint
+    image: harbor.m0sh1.cc/dhi/deno:2.6.10-dev
+    commands:
+      - deno lint
+
+  - name: deno-fmt
+    image: harbor.m0sh1.cc/dhi/deno:2.6.10-dev
+    commands:
+      - deno fmt --check
+
+  - name: deno-check
+    image: harbor.m0sh1.cc/dhi/deno:2.6.10-dev
+    failure: ignore
+    commands:
+      - deno install --allow-import --frozen --lock=deno.lock
+      # Advisory — upstream lib/ has ArrayBuffer compat errors with Deno 2.6.
+      - deno check --allow-import main.ts
+
+  - name: build-and-push
+    image: woodpeckerci/plugin-docker-buildx
+    privileged: true
+    settings:
+      registry: harbor.m0sh1.cc
+      repo: harbor.m0sh1.cc/apps/livesync-bridge
+      dockerfile: Dockerfile
+      tags:
+        - "${CI_COMMIT_SHA:0:8}"
+        - latest
+      username:
+        from_secret: harbor_username
+      password:
+        from_secret: harbor_password
+      build_args:
+        - "COMMIT_SHA=${CI_COMMIT_SHA}"
+      cache_images:
+        - harbor.m0sh1.cc/apps/livesync-bridge:cache
+
+  - name: trivy-scan
+    image: harbor.m0sh1.cc/dhi/trivy:0.69.1-debian13-dev
+    environment:
+      TRIVY_USERNAME:
+        from_secret: harbor_username
+      TRIVY_PASSWORD:
+        from_secret: harbor_password
+    commands:
+      - trivy image --exit-code 1 --severity CRITICAL --ignore-unfixed harbor.m0sh1.cc/apps/livesync-bridge:${CI_COMMIT_SHA:0:8}
+      - trivy image --exit-code 0 --severity HIGH --ignore-unfixed harbor.m0sh1.cc/apps/livesync-bridge:${CI_COMMIT_SHA:0:8}
+
+  - name: cosign-sign
+    image: harbor.m0sh1.cc/dhi/cosign:3.0.5-debian13-dev
+    environment:
+      COSIGN_KEY:
+        from_secret: cosign_key
+      COSIGN_PASSWORD:
+        from_secret: cosign_password
+      REGISTRY_USERNAME:
+        from_secret: harbor_username
+      REGISTRY_PASSWORD:
+        from_secret: harbor_password
+    commands:
+      - echo "$COSIGN_KEY" > /tmp/cosign.key
+      - cosign login harbor.m0sh1.cc -u "$REGISTRY_USERNAME" -p "$REGISTRY_PASSWORD"
+      - cosign sign --key /tmp/cosign.key --yes harbor.m0sh1.cc/apps/livesync-bridge:${CI_COMMIT_SHA:0:8}
+      - rm -f /tmp/cosign.key
+
+  - name: notation-sign
+    image: harbor.m0sh1.cc/dhi/notation:1.3.2-debian13-dev
+    environment:
+      NOTATION_KEY:
+        from_secret: notation_key
+      NOTATION_CERT:
+        from_secret: notation_cert
+      REGISTRY_USERNAME:
+        from_secret: harbor_username
+      REGISTRY_PASSWORD:
+        from_secret: harbor_password
+    commands:
+      - mkdir -p /tmp/notation $HOME/.config/notation $HOME/.docker
+      - echo "$NOTATION_KEY" > /tmp/notation/harbor.key
+      - echo "$NOTATION_CERT" > /tmp/notation/harbor.crt
+      - |
+        cat > $HOME/.config/notation/signingkeys.json <<EOF
+        {"default":"harbor","keys":[{"name":"harbor","keyPath":"/tmp/notation/harbor.key","certPath":"/tmp/notation/harbor.crt"}]}
+        EOF
+      - printf '{"auths":{"harbor.m0sh1.cc":{"auth":"%s"}}}' "$(printf '%s:%s' "$REGISTRY_USERNAME" "$REGISTRY_PASSWORD" | base64)" > $HOME/.docker/config.json
+      - notation sign --key harbor harbor.m0sh1.cc/apps/livesync-bridge:${CI_COMMIT_SHA:0:8}
+      - rm -rf /tmp/notation $HOME/.docker/config.json

@@ -1,13 +1,23 @@
 import { join as joinPosix } from "jsr:@std/path/posix";
 import type { FileInfo } from "./lib/src/API/DirectFileManipulatorV2.ts";
 
-import { FilePathWithPrefix, LOG_LEVEL, LOG_LEVEL_DEBUG, LOG_LEVEL_INFO, LOG_LEVEL_NOTICE } from "./lib/src/common/types.ts";
-import { PeerConf, FileData } from "./types.ts";
+import {
+    FilePathWithPrefix,
+    LOG_LEVEL,
+    LOG_LEVEL_DEBUG,
+    LOG_LEVEL_INFO,
+    LOG_LEVEL_NOTICE,
+} from "./lib/src/common/types.ts";
+import { FileData, PeerConf } from "./types.ts";
 import { Logger } from "octagonal-wheels/common/logger.js";
-import { LRUCache } from "octagonal-wheels/memory/LRUCache.js"
+import { LRUCache } from "octagonal-wheels/memory/LRUCache.js";
 import { computeHash } from "./util.ts";
 
-export type DispatchFun = (source: Peer, path: string, data: FileData | false) => Promise<void>;
+export type DispatchFun = (
+    source: Peer,
+    path: string,
+    data: FileData | false,
+) => Promise<void>;
 
 export abstract class Peer {
     config: PeerConf;
@@ -39,7 +49,9 @@ export abstract class Peer {
     abstract stop(): Promise<void>;
     cache = new LRUCache<string, string>(300, 10000000, true);
     async isRepeating(path: string, data: FileData | false) {
-        const d = await computeHash(data === false ? ["\u0001Deleted"] : data.data);
+        const d = await computeHash(
+            data === false ? ["\u0001Deleted"] : data.data,
+        );
 
         if (this.cache.has(path) && this.cache.get(path) == d) {
             return true;
@@ -66,14 +78,21 @@ export abstract class Peer {
         if (!(error instanceof Error)) {
             return false;
         }
-        return error.message.toLowerCase().includes("database disk image is malformed");
+        return error.message.toLowerCase().includes(
+            "database disk image is malformed",
+        );
     }
     private resetLocalStorage(): boolean {
         try {
             localStorage.clear();
             return true;
         } catch (error) {
-            this.normalLog(`Failed to reset localStorage: ${error instanceof Error ? error.message : String(error)}`, LOG_LEVEL_NOTICE);
+            this.normalLog(
+                `Failed to reset localStorage: ${
+                    error instanceof Error ? error.message : String(error)
+                }`,
+                LOG_LEVEL_NOTICE,
+            );
             return false;
         }
     }

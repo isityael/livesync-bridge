@@ -5,14 +5,15 @@ import { Hub } from "./Hub.ts";
 import { Config } from "./types.ts";
 import { parseArgs } from "jsr:@std/cli";
 
-const KEY = "LSB_"
+const KEY = "LSB_";
 const MALFORMED_LOCAL_STORAGE_MARKER = "database disk image is malformed";
 const CORRUPT_LOCAL_STORAGE_FILES = new Set([
     "local_storage",
     "local_storage-shm",
     "local_storage-wal",
 ]);
-const debugLogging = (Deno.env.get(`${KEY}DEBUG`) ?? "").toLowerCase() === "true";
+const debugLogging =
+    (Deno.env.get(`${KEY}DEBUG`) ?? "").toLowerCase() === "true";
 defaultLoggerEnv.minLogLevel = debugLogging ? LOG_LEVEL_DEBUG : LOG_LEVEL_INFO;
 const configFile = Deno.env.get(`${KEY}CONFIG`) || "./dat/config.json";
 
@@ -52,23 +53,32 @@ function assertLocalStorageHealthy() {
     localStorage.removeItem(healthKey);
 }
 
-async function recoverMalformedLocalStorage(stage: string, error: unknown): Promise<boolean> {
+async function recoverMalformedLocalStorage(
+    stage: string,
+    error: unknown,
+): Promise<boolean> {
     if (!isMalformedLocalStorageError(error)) {
         return false;
     }
 
     const reason = error instanceof Error ? error.message : String(error);
-    console.error(`[livesync-bridge] malformed localStorage detected during ${stage}: ${reason}`);
+    console.error(
+        `[livesync-bridge] malformed localStorage detected during ${stage}: ${reason}`,
+    );
 
     const denoDir = Deno.env.get("DENO_DIR");
     if (!denoDir) {
-        console.error("[livesync-bridge] DENO_DIR is not set; cannot recover localStorage.");
+        console.error(
+            "[livesync-bridge] DENO_DIR is not set; cannot recover localStorage.",
+        );
         return false;
     }
 
     const locationDataDir = `${denoDir}/location_data`;
     const removedFiles = await removeCorruptLocalStorageFiles(locationDataDir);
-    console.error(`[livesync-bridge] removed ${removedFiles} corrupted localStorage files under ${locationDataDir}`);
+    console.error(
+        `[livesync-bridge] removed ${removedFiles} corrupted localStorage files under ${locationDataDir}`,
+    );
 
     try {
         localStorage.clear();
@@ -81,8 +91,12 @@ async function recoverMalformedLocalStorage(stage: string, error: unknown): Prom
         console.log("[livesync-bridge] localStorage recovery succeeded");
         return true;
     } catch (probeError) {
-        const probeMessage = probeError instanceof Error ? probeError.message : String(probeError);
-        console.error(`[livesync-bridge] localStorage recovery probe failed: ${probeMessage}`);
+        const probeMessage = probeError instanceof Error
+            ? probeError.message
+            : String(probeError);
+        console.error(
+            `[livesync-bridge] localStorage recovery probe failed: ${probeMessage}`,
+        );
         return false;
     }
 }
@@ -108,7 +122,10 @@ if (flags.reset) {
 try {
     assertLocalStorageHealthy();
 } catch (error) {
-    const recovered = await recoverMalformedLocalStorage("startup probe", error);
+    const recovered = await recoverMalformedLocalStorage(
+        "startup probe",
+        error,
+    );
     if (!recovered) {
         throw error;
     }
