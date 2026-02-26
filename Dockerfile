@@ -1,12 +1,12 @@
 # Stage 1: Cache modules and transpilation artifacts
 #
 # Policy: prefer glibc-based images for networked apps (Service DNS, CouchDB client).
-FROM harbor.m0sh1.cc/dhi/deno:2.6.10-dev@sha256:de7269a9b492638e8e9bdfbee16d1b8825056f1de2111f6f090d283e38dd60e3 AS builder
+FROM harbor.m0sh1.cc/dhi/deno:2.7.1-dev@sha256:ff9db70c147d5989e612e3ca8ac70ae5f4606ccf5563d1935a21636935d0b740 AS builder
 
 WORKDIR /app
 ENV DENO_DIR=/deno-dir \
-    DENO_NO_UPDATE_CHECK=1 \
-    DENO_NO_PROMPT=1
+  DENO_NO_UPDATE_CHECK=1 \
+  DENO_NO_PROMPT=1
 
 # Copy manifests first for better layer reuse.
 COPY deno.jsonc deno.lock ./
@@ -21,12 +21,12 @@ RUN deno install --allow-import --frozen --lock=deno.lock \
   && mkdir -p /app/data /app/dat
 
 # Stage 2: Runtime
-FROM harbor.m0sh1.cc/dhi/deno:2.6.10@sha256:1a37225c2e1d91593ea62f930a5a98088f8c71e5bf80e453a555b1fcc6ea7318
+FROM harbor.m0sh1.cc/dhi/deno:2.7.1@sha256:096f2cccb6950623b1a2c622c9d98c5520c98509da9e589ec44962b0e579c7d8
 
 WORKDIR /app
 ENV DENO_DIR=/deno-dir \
-    DENO_NO_UPDATE_CHECK=1 \
-    DENO_NO_PROMPT=1
+  DENO_NO_UPDATE_CHECK=1 \
+  DENO_NO_PROMPT=1
 
 COPY --from=builder --chown=1000:1000 /deno-dir /deno-dir
 COPY --from=builder --chown=1000:1000 /app/node_modules /app/node_modules

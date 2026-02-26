@@ -35,8 +35,8 @@ tools/ci/build-sign-push.fish \
 
 ## Base Images
 
-- Builder: `harbor.m0sh1.cc/dhi/deno:2.6.9-dev` (root, Debian 13)
-- Runtime: `harbor.m0sh1.cc/dhi/deno:2.6.9` (non-root, Debian 13)
+- Builder: `harbor.m0sh1.cc/dhi/deno:2.7.1-dev` (root, Debian 13)
+- Runtime: `harbor.m0sh1.cc/dhi/deno:2.7.1` (non-root, Debian 13)
 
 ## Upstream
 
