@@ -104,20 +104,19 @@ export class PeerStorage extends Peer {
             });
             // const dateStr = startDate.toLocaleString();
             const scriptLineMessage = `Script: called ${cmd} with args ${
-                JSON.stringify(args)
+                JSON.stringify(
+                    args,
+                )
             }`;
             this.normalLog(`Processor : ${scriptLineMessage}`);
-            const command = new Deno.Command(
-                cmd,
-                {
-                    args: args,
-                    cwd: ".",
-                    env: {
-                        filename: filename,
-                        mode: mode,
-                    },
+            const command = new Deno.Command(cmd, {
+                args: args,
+                cwd: ".",
+                env: {
+                    filename: filename,
+                    mode: mode,
                 },
-            );
+            });
             // const start = performance.now();
             const { code, stdout, stderr } = await command.output();
             // const end = performance.now();
@@ -182,10 +181,9 @@ export class PeerStorage extends Peer {
     watcher?: chokidar.FSWatcher;
 
     private globToRegex(glob: string): RegExp {
-        const escaped = glob.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(
-            /\*/g,
-            ".*",
-        );
+        const escaped = glob
+            .replace(/[.+?^${}()|[\]\\]/g, "\\$&")
+            .replace(/\*/g, ".*");
         return new RegExp(`^${escaped}$`);
     }
 
@@ -201,10 +199,10 @@ export class PeerStorage extends Peer {
         if (segments.length === 0) return false;
 
         for (const rawPattern of patterns) {
-            const pattern = rawPattern.trim().replace(/^\.\/+/, "").replace(
-                /\/+$/,
-                "",
-            );
+            const pattern = rawPattern
+                .trim()
+                .replace(/^\.\/+/, "")
+                .replace(/\/+$/, "");
             if (!pattern) continue;
             const matcher = this.globToRegex(pattern);
 
@@ -244,7 +242,7 @@ export class PeerStorage extends Peer {
             // console.log(data);
             await this.writeFileStat(path);
             await delay(250);
-            if (!await this.isRepeating(path, data)) {
+            if (!(await this.isRepeating(path, data))) {
                 this.sendLog(`${path} change detected`);
                 await this.dispatchToHub(this, this.toGlobalPath(path), data);
             }
@@ -261,7 +259,7 @@ export class PeerStorage extends Peer {
         }
         await scheduleOnceIfDuplicated(pathSrc, async () => {
             await delay(250);
-            if (!await this.isRepeating(path, false)) {
+            if (!(await this.isRepeating(path, false))) {
                 this.sendLog(`${path} delete detected`);
                 await this.dispatchToHub(this, this.toGlobalPath(path), false);
             }
@@ -283,7 +281,7 @@ export class PeerStorage extends Peer {
         const lp = this.toLocalPath(pathSrc);
         const key = `file-stat-${lp}`;
         const path = this.toStoragePath(lp);
-        const stat = statSrc ?? await Deno.stat(path);
+        const stat = statSrc ?? (await Deno.stat(path));
         if (!stat.isFile) {
             return false;
         }
@@ -399,7 +397,7 @@ export class PeerStorage extends Peer {
             const ePath = this.toPosixPath(
                 relative(this.toLocalPath("."), path),
             );
-            if (!await this.isChanged(ePath)) {
+            if (!(await this.isChanged(ePath))) {
                 // this.debugLog(`Not changed: ${ePath}`);
             } else {
                 this.debugLog(`Changes detected: ${ePath}`);
@@ -410,7 +408,7 @@ export class PeerStorage extends Peer {
             const ePath = this.toPosixPath(
                 relative(this.toLocalPath("."), path),
             );
-            if (!await this.isChanged(ePath)) {
+            if (!(await this.isChanged(ePath))) {
                 // this.debugLog(`Not changed: ${ePath}`);
             } else {
                 this.debugLog(`New detected: ${ePath}`);

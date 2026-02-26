@@ -40,8 +40,8 @@
         "chokidar": "npm:chokidar@^5.0.0"
     },
     "lint": {
-        "include": [ "*.ts" ],
-        "exclude": [ "lib/" ],
+        "include": ["*.ts"],
+        "exclude": ["lib/"],
         "rules": {
             "exclude": [
                 "no-explicit-any",
@@ -52,10 +52,10 @@
         }
     },
     "fmt": {
-        "include": [ "*.ts", "deno.jsonc" ],
-        "exclude": [ "lib/" ],
+        "include": ["*.ts", "deno.jsonc"],
+        "exclude": ["lib/"],
         "indentWidth": 4
     },
     "nodeModulesDir": "manual",
-    "unstable": [ "bare-node-builtins", "sloppy-imports", "byonm" ]
+    "unstable": ["bare-node-builtins", "sloppy-imports", "byonm"]
 }

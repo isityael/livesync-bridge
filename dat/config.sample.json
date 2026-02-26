@@ -1,54 +1,54 @@
 {
-    "peers": [
-        {
-            "type": "couchdb",
-            "name": "test1",
-            "group": "main",
-            "database": "test",
-            "username": "admin",
-            "password": "password",
-            "url": "http://localhost:5984",
-            "passphrase": "passphrase",
-            "obfuscatePassphrase": "passphrase",
-            "baseDir": "blog/",
-            "useRemoteTweaks": true
-        },
-        {
-            "type": "couchdb",
-            "name": "test2",
-            "group": "sub",
-            "database": "test2",
-            "passphrase": "passphrase",
-            "password": "password",
-            "url": "http://localhost:5984",
-            "username": "admin",
-            "customChunkSize": 100,
-            "minimumChunkSize": 20,
-            "obfuscatePassphrase": "passphrase",
-            "baseDir": "syncLinux/"
-        },
-        {
-            "type": "storage",
-            "group": "main",
-            "name": "test-windows",
-            "baseDir": "./vault/",
-            "processor": {
-                "cmd": "cmd",
-                "args": ["/C", "script\\test.bat", "$filename", "$mode"]
-            },
-            "scanOfflineChanges": true
-        },
-        {
-            "type": "storage",
-            "group": "sub",
-            "name": "test-linux",
-            "baseDir": "./vault-linux/",
-            "processor": {
-                "cmd": "script/test.sh",
-                "args": ["$filename", "$mode"]
-            },
-            "scanOfflineChanges": true,
-            "useChokidar": true
-        }
-    ]
+	"peers": [
+		{
+			"type": "couchdb",
+			"name": "test1",
+			"group": "main",
+			"database": "test",
+			"username": "admin",
+			"password": "password",
+			"url": "http://localhost:5984",
+			"passphrase": "passphrase",
+			"obfuscatePassphrase": "passphrase",
+			"baseDir": "blog/",
+			"useRemoteTweaks": true
+		},
+		{
+			"type": "couchdb",
+			"name": "test2",
+			"group": "sub",
+			"database": "test2",
+			"passphrase": "passphrase",
+			"password": "password",
+			"url": "http://localhost:5984",
+			"username": "admin",
+			"customChunkSize": 100,
+			"minimumChunkSize": 20,
+			"obfuscatePassphrase": "passphrase",
+			"baseDir": "syncLinux/"
+		},
+		{
+			"type": "storage",
+			"group": "main",
+			"name": "test-windows",
+			"baseDir": "./vault/",
+			"processor": {
+				"cmd": "cmd",
+				"args": ["/C", "script\\test.bat", "$filename", "$mode"]
+			},
+			"scanOfflineChanges": true
+		},
+		{
+			"type": "storage",
+			"group": "sub",
+			"name": "test-linux",
+			"baseDir": "./vault-linux/",
+			"processor": {
+				"cmd": "script/test.sh",
+				"args": ["$filename", "$mode"]
+			},
+			"scanOfflineChanges": true,
+			"useChokidar": true
+		}
+	]
 }

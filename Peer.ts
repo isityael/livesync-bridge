@@ -30,7 +30,7 @@ export abstract class Peer {
     toLocalPath(path: string) {
         const relativeJoined = joinPosix(this.config.baseDir, path);
         const relative = relativeJoined == "." ? "" : relativeJoined;
-        const ret = (relative.startsWith("_")) ? ("/" + relative) : relative;
+        const ret = relative.startsWith("_") ? "/" + relative : relative;
         // this.debugLog(`**TOLOCAL: ${path} => ${ret}`);
         return ret;
     }
@@ -78,9 +78,9 @@ export abstract class Peer {
         if (!(error instanceof Error)) {
             return false;
         }
-        return error.message.toLowerCase().includes(
-            "database disk image is malformed",
-        );
+        return error.message
+            .toLowerCase()
+            .includes("database disk image is malformed");
     }
     private resetLocalStorage(): boolean {
         try {

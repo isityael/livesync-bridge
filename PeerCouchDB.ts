@@ -56,16 +56,16 @@ export class PeerCouchDB extends Peer {
             mtime: data.mtime,
             size: data.size,
         };
-        const saveData = (data.data instanceof Uint8Array)
+        const saveData = data.data instanceof Uint8Array
             ? createBinaryBlob(data.data)
             : createTextBlob(data.data);
-        const old = await this.man.get(path as FilePathWithPrefix, true) as
+        const old = (await this.man.get(path as FilePathWithPrefix, true)) as
             | false
             | MetaEntry;
         // const old = await this.getMeta(path as FilePathWithPrefix);
         if (old && Math.abs(this.compareDate(info, old)) < 3600) {
             const oldDoc = await this.man.getByMeta(old);
-            if (oldDoc && ("data" in oldDoc)) {
+            if (oldDoc && "data" in oldDoc) {
                 const d = oldDoc.type == "plain"
                     ? createTextBlob(oldDoc.data)
                     : createBinaryBlob(
@@ -87,7 +87,7 @@ export class PeerCouchDB extends Peer {
     }
     async get(pathSrc: FilePathWithPrefix): Promise<false | FileData> {
         const path = this.toLocalPath(pathSrc) as FilePathWithPrefix;
-        const ret = await this.man.get(path) as false | ReadyEntry;
+        const ret = (await this.man.get(path)) as false | ReadyEntry;
         if (ret === false) {
             return false;
         }
@@ -103,7 +103,7 @@ export class PeerCouchDB extends Peer {
     }
     async getMeta(pathSrc: FilePathWithPrefix): Promise<false | FileData> {
         const path = this.toLocalPath(pathSrc) as FilePathWithPrefix;
-        const ret = await this.man.get(path, true) as false | MetaEntry;
+        const ret = (await this.man.get(path, true)) as false | MetaEntry;
         if (ret === false) {
             return false;
         }
@@ -216,37 +216,40 @@ export class PeerCouchDB extends Peer {
         } else {
             this.normalLog(`Watch starting from ${this.man.since}`);
         }
-        this.man.beginWatch(async (entry) => {
-            const d = entry.type == "plain"
-                ? entry.data
-                : new Uint8Array(decodeBinary(entry.data));
-            let path = entry.path.substring(baseDir.length);
-            if (path.startsWith("/")) {
-                path = path.substring(1);
-            }
-            if (entry.deleted || entry._deleted) {
-                this.sendLog(`${path} delete detected`);
-                await this.dispatchDeleted(path);
-            } else {
-                const docData = {
-                    ctime: entry.ctime,
-                    mtime: entry.mtime,
-                    size: entry.size,
-                    deleted: entry.deleted || entry._deleted,
-                    data: d,
-                };
-                this.sendLog(`${path} change detected`);
-                await this.dispatch(path, docData);
-            }
-        }, (entry) => {
-            this.setSetting("since", this.man.since);
-            if (entry.path.indexOf(":") !== -1) return false;
-            return entry.path.startsWith(baseDir);
-        });
+        this.man.beginWatch(
+            async (entry) => {
+                const d = entry.type == "plain"
+                    ? entry.data
+                    : new Uint8Array(decodeBinary(entry.data));
+                let path = entry.path.substring(baseDir.length);
+                if (path.startsWith("/")) {
+                    path = path.substring(1);
+                }
+                if (entry.deleted || entry._deleted) {
+                    this.sendLog(`${path} delete detected`);
+                    await this.dispatchDeleted(path);
+                } else {
+                    const docData = {
+                        ctime: entry.ctime,
+                        mtime: entry.mtime,
+                        size: entry.size,
+                        deleted: entry.deleted || entry._deleted,
+                        data: d,
+                    };
+                    this.sendLog(`${path} change detected`);
+                    await this.dispatch(path, docData);
+                }
+            },
+            (entry) => {
+                this.setSetting("since", this.man.since);
+                if (entry.path.indexOf(":") !== -1) return false;
+                return entry.path.startsWith(baseDir);
+            },
+        );
     }
     async dispatch(path: string, data: FileData | false) {
         if (data === false) return;
-        if (!await this.isRepeating(path, data)) {
+        if (!(await this.isRepeating(path, data))) {
             await this.dispatchToHub(this, this.toGlobalPath(path), data);
         }
         // else {
@@ -254,7 +257,7 @@ export class PeerCouchDB extends Peer {
         // }
     }
     async dispatchDeleted(path: string) {
-        if (!await this.isRepeating(path, false)) {
+        if (!(await this.isRepeating(path, false))) {
             await this.dispatchToHub(this, this.toGlobalPath(path), false);
         }
     }
