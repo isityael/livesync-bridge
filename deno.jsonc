@@ -27,8 +27,8 @@
         "octagonal-wheels": "npm:octagonal-wheels@^0.1.45",
         "xxhash-wasm-102": "npm:xxhash-wasm@^1.1.0",
         "crypto": "node:crypto",
-        "minimatch": "npm:minimatch@^10.2.4",
-        "brace-expansion": "npm:brace-expansion@^5.0.3",
+        "minimatch": "npm:minimatch@^10.2.5",
+        "brace-expansion": "npm:brace-expansion@^5.0.5",
         "fflate": "npm:fflate@^0.8.2",
         "pouchdb-core": "npm:pouchdb-core@^9.0.0",
         "pouchdb-adapter-http": "npm:pouchdb-adapter-http@^9.0.0",
@@ -39,7 +39,8 @@
         "pouchdb-errors": "npm:pouchdb-errors@^9.0.0",
         "pouchdb-mapreduce": "npm:pouchdb-mapreduce@^9.0.0",
         "transform-pouch": "npm:transform-pouch@^2.0.0",
-        "chokidar": "npm:chokidar@^5.0.0"
+        "chokidar": "npm:chokidar@^5.0.0",
+        "@types/node": "npm:@types/node@^25.5.0"
     },
     "lint": {
         "include": ["*.ts"],

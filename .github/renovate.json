@@ -1,67 +1,45 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
+    "github>sm-moshi/infra//.github/renovate/base.json",
     "config:best-practices",
     ":preserveSemverRanges"
   ],
-  "platformAutomerge": false,
-  "dependencyDashboard": true,
-  "dependencyDashboardApproval": true,
-  "timezone": "Europe/Berlin",
-  "schedule": [
-    "at any time"
-  ],
-  "prHourlyLimit": 5,
-  "prConcurrentLimit": 3,
   "enabledManagers": [
     "dockerfile",
+    "woodpecker",
     "custom.regex"
   ],
-  "labels": [
-    "dependencies"
-  ],
-  "pinDigests": false,
   "customManagers": [
     {
       "customType": "regex",
       "description": "Deno import map npm: specifiers in deno.jsonc",
       "managerFilePatterns": ["/deno\\.jsonc?$/"],
       "matchStrings": [
-        "\"npm:(?<depName>[^@]+)@(?<currentValue>[^\"]+)\""
+        "\"npm:(?<depName>(?:@[^/]+/)?[^@]+)@(?<currentValue>[^\"]+)\""
       ],
       "datasourceTemplate": "npm"
+    },
+    {
+      "customType": "regex",
+      "description": "Deno import map jsr: specifiers in deno.jsonc",
+      "managerFilePatterns": ["/deno\\.jsonc?$/"],
+      "matchStrings": [
+        "\"jsr:(?<depName>@[^@/]+/[^@/@]+)@(?<currentValue>[^\"/@]+)"
+      ],
+      "datasourceTemplate": "jsr"
     }
   ],
-  "registryAliases": {
-    "harbor.m0sh1.cc/dhi": "dhi.io",
-    "harbor.m0sh1.cc/ghcr": "ghcr.io",
-    "harbor.m0sh1.cc/hub": "docker.io",
-    "harbor.m0sh1.cc/quay": "quay.io"
-  },
   "packageRules": [
     {
-      "description": "DHI image versioning: variant-locked via compatibility group (e.g., dev only matches dev)",
-      "matchDatasources": ["docker"],
-      "matchPackageNames": ["/^dhi\\.io\\//"],
-      "versioning": "regex:^(?<major>\\d+)(\\.(?<minor>\\d+))?(\\.(?<patch>\\d+))?(-(?<compatibility>.+))?$"
+      "matchManagers": ["dockerfile"],
+      "addLabels": ["docker"]
     },
     {
-      "matchManagers": [
-        "dockerfile"
-      ],
-      "addLabels": [
-        "docker"
-      ]
-    },
-    {
-      "description": "Ignore our own built images — not trackable upstream",
-      "matchManagers": [
-        "dockerfile"
-      ],
-      "enabled": false,
-      "matchPackageNames": [
-        "/^harbor\\.m0sh1\\.cc/apps//"
-      ]
+      "description": "Auto-merge Deno package patch and minor updates — low blast radius",
+      "matchManagers": ["custom.regex"],
+      "matchUpdateTypes": ["patch", "minor"],
+      "automerge": true
     }
   ]
 }
