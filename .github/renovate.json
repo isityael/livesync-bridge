@@ -15,12 +15,23 @@
   "prConcurrentLimit": 3,
   "enabledManagers": [
     "dockerfile",
-    "npm"
+    "custom.regex"
   ],
   "labels": [
     "dependencies"
   ],
   "pinDigests": false,
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Deno import map npm: specifiers in deno.jsonc",
+      "managerFilePatterns": ["/deno\\.jsonc?$/"],
+      "matchStrings": [
+        "\"npm:(?<depName>[^@]+)@(?<currentValue>[^\"]+)\""
+      ],
+      "datasourceTemplate": "npm"
+    }
+  ],
   "registryAliases": {
     "harbor.m0sh1.cc/dhi": "dhi.io",
     "harbor.m0sh1.cc/ghcr": "ghcr.io",
