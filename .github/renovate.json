@@ -1,0 +1,55 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:best-practices",
+    ":preserveSemverRanges"
+  ],
+  "platformAutomerge": false,
+  "dependencyDashboard": true,
+  "dependencyDashboardApproval": true,
+  "timezone": "Europe/Berlin",
+  "schedule": [
+    "at any time"
+  ],
+  "prHourlyLimit": 5,
+  "prConcurrentLimit": 3,
+  "enabledManagers": [
+    "dockerfile"
+  ],
+  "labels": [
+    "dependencies"
+  ],
+  "pinDigests": false,
+  "registryAliases": {
+    "harbor.m0sh1.cc/dhi": "dhi.io",
+    "harbor.m0sh1.cc/ghcr": "ghcr.io",
+    "harbor.m0sh1.cc/hub": "docker.io",
+    "harbor.m0sh1.cc/quay": "quay.io"
+  },
+  "packageRules": [
+    {
+      "description": "DHI image versioning: variant-locked via compatibility group (e.g., dev only matches dev)",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["/^dhi\\.io\\//"],
+      "versioning": "regex:^(?<major>\\d+)(\\.(?<minor>\\d+))?(\\.(?<patch>\\d+))?(-(?<compatibility>.+))?$"
+    },
+    {
+      "matchManagers": [
+        "dockerfile"
+      ],
+      "addLabels": [
+        "docker"
+      ]
+    },
+    {
+      "description": "Ignore our own built images — not trackable upstream",
+      "matchManagers": [
+        "dockerfile"
+      ],
+      "enabled": false,
+      "matchPackageNames": [
+        "/^harbor\\.m0sh1\\.cc/apps//"
+      ]
+    }
+  ]
+}
