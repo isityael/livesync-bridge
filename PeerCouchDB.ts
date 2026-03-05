@@ -33,6 +33,7 @@ export class PeerCouchDB extends Peer {
         this.man.since = this.getSetting("since") || "now";
     }
     async delete(pathSrc: string): Promise<boolean> {
+        await this.man.ready.promise;
         const path = this.toLocalPath(pathSrc);
         if (await this.isRepeating(pathSrc, false)) {
             return false;
@@ -46,6 +47,7 @@ export class PeerCouchDB extends Peer {
         return r;
     }
     async put(pathSrc: string, data: FileData): Promise<boolean> {
+        await this.man.ready.promise;
         const path = this.toLocalPath(pathSrc);
         if (await this.isRepeating(pathSrc, data)) {
             return false;
@@ -119,6 +121,7 @@ export class PeerCouchDB extends Peer {
         const baseDir = this.toLocalPath("");
         await this.man.ready.promise;
         const w = await this.man.rawGet<Record<string, any>>(MILESTONE_DOCID);
+        const remoteInfo = await this.man.liveSyncLocalDB.localDatabase.info();
         if (w && "tweak_values" in w) {
             if (this.config.useRemoteTweaks) {
                 const tweaks = Object.values(
@@ -200,21 +203,43 @@ export class PeerCouchDB extends Peer {
             }
         }
         if (!w) {
-            this.normalLog(
-                `Remote database looks like empty. fetch from the first.`,
-            );
-            this.setSetting("remote-created", "0");
-            return;
+            const remoteDocCount = Number(remoteInfo.doc_count ?? 0);
+            if (remoteDocCount === 0) {
+                this.normalLog(
+                    `Remote database looks like empty. fetch from the first.`,
+                );
+                this.setSetting("remote-created", "0");
+                return;
+            }
+
+            const remoteIdentity = `missing-milestone:${
+                (remoteInfo as { uuid?: string }).uuid ??
+                    remoteInfo.db_name ??
+                    this.config.database
+            }`;
+            if (this.getSetting("remote-created") !== remoteIdentity) {
+                this.man.since = "";
+                this.normalLog(
+                    `Remote database is populated (${remoteDocCount} docs) but missing the milestone document. fetch from the first without reseeding local content.`,
+                );
+                this.setSetting("remote-created", remoteIdentity);
+            } else {
+                this.normalLog(
+                    `Remote database is populated (${remoteDocCount} docs) but missing the milestone document. Watch starting from ${this.man.since}`,
+                );
+            }
         }
-        const created = w.created;
-        if (this.getSetting("remote-created") !== `${created}`) {
-            this.man.since = "";
-            this.normalLog(
-                `Remote database looks like rebuilt. fetch from the first again.`,
-            );
-            this.setSetting("remote-created", `${created}`);
-        } else {
-            this.normalLog(`Watch starting from ${this.man.since}`);
+        if (w) {
+            const created = w.created;
+            if (this.getSetting("remote-created") !== `${created}`) {
+                this.man.since = "";
+                this.normalLog(
+                    `Remote database looks like rebuilt. fetch from the first again.`,
+                );
+                this.setSetting("remote-created", `${created}`);
+            } else {
+                this.normalLog(`Watch starting from ${this.man.since}`);
+            }
         }
         this.man.beginWatch(
             async (entry) => {

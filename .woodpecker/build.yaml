@@ -17,28 +17,29 @@ when:
 variables:
   - &image "harbor.m0sh1.cc/apps/livesync-bridge"
   - &image_tag "${CI_COMMIT_SHA:0:8}"
+  - &deno_image "dhi.io/deno:2.7.12-dev@sha256:73e4d45eacfb38e350878e5898e76021920b0f2fd5d41f6a75b6a679d64f25c6"
 
 steps:
   - name: deno-lint
-    image: harbor.m0sh1.cc/dhi/deno:2.6.10-dev
+    image: *deno_image
     commands:
       - deno lint
 
   - name: deno-fmt
-    image: harbor.m0sh1.cc/dhi/deno:2.6.10-dev
+    image: *deno_image
     commands:
       - deno fmt --check
 
   - name: deno-check
-    image: harbor.m0sh1.cc/dhi/deno:2.6.10-dev
+    image: *deno_image
     failure: ignore
     commands:
-      - deno install --allow-import --frozen --lock=deno.lock
-      # Advisory — upstream lib/ has ArrayBuffer compat errors with Deno 2.6.
+      - deno install --allow-import
+      # Advisory — upstream lib/ has ArrayBuffer compat errors with Deno 2.x.
       - deno check --allow-import main.ts
 
   - name: build-and-push
-    image: woodpeckerci/plugin-docker-buildx
+    image: woodpeckerci/plugin-docker-buildx@sha256:578ad38579cb893eb65b6af9610b8ef05dd9538559605169d57e6b7b2d4a76b4
     privileged: true
     settings:
       registry: harbor.m0sh1.cc
@@ -47,18 +48,33 @@ steps:
       tags:
         - *image_tag
         - latest
-      username:
-        from_secret: harbor_username
-      password:
-        from_secret: harbor_password
+      logins:
+        - registry: harbor.m0sh1.cc
+          username:
+            from_secret: harbor_username
+          password:
+            from_secret: harbor_password
+        - registry: dhi.io
+          username:
+            from_secret: dhi_username
+          password:
+            from_secret: dhi_password
       provenance: mode=max
+      buildkit_driveropt: network=host
       build_args:
         - "COMMIT_SHA=${CI_COMMIT_SHA}"
-      cache_images:
-        - harbor.m0sh1.cc/cache/livesync-bridge:buildkit
+      cache_from: 'type=registry\,ref=harbor.m0sh1.cc/cache/livesync-bridge:buildcache'
+      cache_to: 'type=registry,ref=harbor.m0sh1.cc/cache/livesync-bridge:buildcache,mode=max,ignore-error=true'
+
+  - name: wait-for-replication
+    image: *deno_image
+    commands:
+      - echo "Waiting 10s for Garage replication..."
+      - sleep 10
 
   - name: trivy-scan
-    image: harbor.m0sh1.cc/dhi/trivy:0.69.1-debian13-dev
+    failure: ignore
+    image: dhi.io/trivy:0.69.3-alpine3.23-dev@sha256:a83dd54175ff3108075d9f9a801719c46ec8dd6e545f4b029d965787c1c33ec6
     environment:
       IMAGE_REF: harbor.m0sh1.cc/apps/livesync-bridge:${CI_COMMIT_SHA:0:8}
       TRIVY_USERNAME:
@@ -70,7 +86,8 @@ steps:
       - trivy image --exit-code 0 --severity HIGH --ignore-unfixed $${IMAGE_REF}
 
   - name: sbom-generate
-    image: harbor.m0sh1.cc/dhi/syft:1.42.1-dev
+    failure: ignore
+    image: dhi.io/syft:1.42.4-alpine3.23-dev@sha256:0eac280b763de15c080bc07a2bd2133e7e37ce8678a8e467d41ef652d8970e21
     environment:
       IMAGE_REF: harbor.m0sh1.cc/apps/livesync-bridge:${CI_COMMIT_SHA:0:8}
       SYFT_REGISTRY_AUTH_AUTHORITY: harbor.m0sh1.cc
@@ -82,7 +99,7 @@ steps:
       - syft registry:$${IMAGE_REF} -o spdx-json > sbom.spdx.json
 
   - name: cosign-sign
-    image: harbor.m0sh1.cc/dhi/cosign:3.0.5-debian13-dev
+    image: dhi.io/cosign:3.0.6-alpine3.23-dev@sha256:3ebec997218161a2bee0f8f36e9e653cc7042002309f404a993ad410e3e90cbe
     environment:
       IMAGE_REF: harbor.m0sh1.cc/apps/livesync-bridge:${CI_COMMIT_SHA:0:8}
       COSIGN_EXPERIMENTAL: "1"
@@ -103,7 +120,7 @@ steps:
       - rm -f /tmp/cosign.key sbom.spdx.json
 
   - name: notation-sign
-    image: harbor.m0sh1.cc/dhi/notation:1.3.2-debian13-dev
+    image: dhi.io/notation:1.3.2-alpine3.23-dev@sha256:3cd3fc38acff3806316346e958114c262f38e5123ed92dbe21f02ca89d660a19
     environment:
       IMAGE_REF: harbor.m0sh1.cc/apps/livesync-bridge:${CI_COMMIT_SHA:0:8}
       NOTATION_KEY:
@@ -122,6 +139,6 @@ steps:
         cat > $HOME/.config/notation/signingkeys.json <<EOF
         {"default":"harbor","keys":[{"name":"harbor","keyPath":"/tmp/notation/harbor.key","certPath":"/tmp/notation/harbor.crt"}]}
         EOF
-      - printf '{"auths":{"harbor.m0sh1.cc":{"auth":"%s"}}}' "$(printf '%s:%s' "$REGISTRY_USERNAME" "$REGISTRY_PASSWORD" | base64)" > $HOME/.docker/config.json
+      - printf '{"auths":{"harbor.m0sh1.cc":{"auth":"%s"}}}' "$(printf '%s:%s' "$REGISTRY_USERNAME" "$REGISTRY_PASSWORD" | base64 -w0)" > $HOME/.docker/config.json
       - notation sign --force-referrers-tag=false --key harbor $${IMAGE_REF}
       - rm -rf /tmp/notation $HOME/.docker/config.json

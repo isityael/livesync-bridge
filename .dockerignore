@@ -2,6 +2,12 @@ dat/*
 vault*/*
 !.gitempty
 *.log
+.git
+.github
+.woodpecker
+.vscode
+.idea
+.DS_Store
 node_modules
 BUILD.md
 readme.md
