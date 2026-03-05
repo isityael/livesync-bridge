@@ -14,7 +14,8 @@
   "prHourlyLimit": 5,
   "prConcurrentLimit": 3,
   "enabledManagers": [
-    "dockerfile"
+    "dockerfile",
+    "npm"
   ],
   "labels": [
     "dependencies"
