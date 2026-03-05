@@ -16,6 +16,11 @@ COPY main.ts Hub.ts Peer.ts PeerCouchDB.ts PeerStorage.ts types.ts util.ts ./
 COPY stubs ./stubs
 COPY lib ./lib
 
+# Patch bare JSON imports in the lib submodule to add the import attribute
+# required by Deno 2.x (upstream uses Obsidian's bundler which handles this).
+RUN find lib/src/common/messages/ -name '*.ts' \
+  -exec sed -i 's/from "\(.*\.json\)";/from "\1" with { type: "json" };/g' {} +
+
 # Install npm deps from lock file, then cache all modules.
 RUN deno install --allow-import --frozen --lock=deno.lock \
   && deno cache --allow-import --frozen --lock=deno.lock main.ts \
