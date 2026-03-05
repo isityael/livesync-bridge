@@ -1,0 +1,106 @@
+# LiveSync Bridge — Release pipeline
+# Triggers on version tags (v*), builds a versioned Docker image,
+# signs it, and creates a Forgejo release.
+when:
+  - event: tag
+    ref: refs/tags/v*
+
+variables:
+  - &image "harbor.m0sh1.cc/apps/livesync-bridge"
+
+steps:
+  - name: build-and-push
+    image: woodpeckerci/plugin-docker-buildx
+    privileged: true
+    settings:
+      registry: harbor.m0sh1.cc
+      repo: *image
+      dockerfile: Dockerfile
+      tags:
+        - "${CI_COMMIT_TAG##v}"
+        - latest
+      username:
+        from_secret: harbor_username
+      password:
+        from_secret: harbor_password
+      provenance: mode=max
+      build_args:
+        - "COMMIT_SHA=${CI_COMMIT_SHA}"
+      cache_images:
+        - harbor.m0sh1.cc/cache/livesync-bridge:buildkit
+
+  - name: trivy-scan
+    image: harbor.m0sh1.cc/dhi/trivy:0.69.1-debian13-dev
+    environment:
+      IMAGE_REF: "harbor.m0sh1.cc/apps/livesync-bridge:${CI_COMMIT_TAG##v}"
+      TRIVY_USERNAME:
+        from_secret: harbor_username
+      TRIVY_PASSWORD:
+        from_secret: harbor_password
+    commands:
+      - trivy image --exit-code 1 --severity CRITICAL --ignore-unfixed $${IMAGE_REF}
+      - trivy image --exit-code 0 --severity HIGH --ignore-unfixed $${IMAGE_REF}
+
+  - name: sbom-generate
+    image: harbor.m0sh1.cc/dhi/syft:1.42.1-dev
+    environment:
+      IMAGE_REF: "harbor.m0sh1.cc/apps/livesync-bridge:${CI_COMMIT_TAG##v}"
+      SYFT_REGISTRY_AUTH_AUTHORITY: harbor.m0sh1.cc
+      SYFT_REGISTRY_AUTH_USERNAME:
+        from_secret: harbor_username
+      SYFT_REGISTRY_AUTH_PASSWORD:
+        from_secret: harbor_password
+    commands:
+      - syft registry:$${IMAGE_REF} -o spdx-json > sbom.spdx.json
+
+  - name: cosign-sign
+    image: harbor.m0sh1.cc/dhi/cosign:3.0.5-debian13-dev
+    environment:
+      IMAGE_REF: "harbor.m0sh1.cc/apps/livesync-bridge:${CI_COMMIT_TAG##v}"
+      COSIGN_EXPERIMENTAL: "1"
+      COSIGN_KEY:
+        from_secret: cosign_key
+      COSIGN_PASSWORD:
+        from_secret: cosign_password
+      REGISTRY_USERNAME:
+        from_secret: harbor_username
+      REGISTRY_PASSWORD:
+        from_secret: harbor_password
+    commands:
+      - echo "$COSIGN_KEY" > /tmp/cosign.key
+      - cosign login harbor.m0sh1.cc -u "$REGISTRY_USERNAME" -p "$REGISTRY_PASSWORD"
+      - cosign sign --key /tmp/cosign.key --yes --registry-referrers-mode=oci-1-1 $${IMAGE_REF}
+      - cosign attest --key /tmp/cosign.key --type spdxjson --predicate sbom.spdx.json --yes $${IMAGE_REF}
+      - rm -f /tmp/cosign.key sbom.spdx.json
+
+  - name: notation-sign
+    image: harbor.m0sh1.cc/dhi/notation:1.3.2-debian13-dev
+    environment:
+      IMAGE_REF: "harbor.m0sh1.cc/apps/livesync-bridge:${CI_COMMIT_TAG##v}"
+      NOTATION_KEY:
+        from_secret: notation_key
+      NOTATION_CERT:
+        from_secret: notation_cert
+      REGISTRY_USERNAME:
+        from_secret: harbor_username
+      REGISTRY_PASSWORD:
+        from_secret: harbor_password
+    commands:
+      - mkdir -p /tmp/notation $HOME/.config/notation $HOME/.docker
+      - echo "$NOTATION_KEY" > /tmp/notation/harbor.key
+      - echo "$NOTATION_CERT" > /tmp/notation/harbor.crt
+      - |
+        cat > $HOME/.config/notation/signingkeys.json <<EOF
+        {"default":"harbor","keys":[{"name":"harbor","keyPath":"/tmp/notation/harbor.key","certPath":"/tmp/notation/harbor.crt"}]}
+        EOF
+      - printf '{"auths":{"harbor.m0sh1.cc":{"auth":"%s"}}}' "$(printf '%s:%s' "$REGISTRY_USERNAME" "$REGISTRY_PASSWORD" | base64)" > $HOME/.docker/config.json
+      - notation sign --force-referrers-tag=false --key harbor $${IMAGE_REF}
+      - rm -rf /tmp/notation $HOME/.docker/config.json
+
+  - name: forgejo-release
+    image: woodpeckerci/plugin-release
+    settings:
+      api_key:
+        from_secret: forgejo_token
+      title: "Release ${CI_COMMIT_TAG}"
+      note: "Docker image: `harbor.m0sh1.cc/apps/livesync-bridge:${CI_COMMIT_TAG##v}`"
