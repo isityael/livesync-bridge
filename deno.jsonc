@@ -12,6 +12,8 @@
         "./lib/src/worker/bgWorker": "./lib/src/worker/bgWorker.mock.ts",
         "./lib/src/pouchdb/pouchdb-browser.ts": "./lib/src/pouchdb/pouchdb-http.ts",
         "@/lib/src/": "./lib/src/",
+        "@/common/events": "./stubs/events.ts",
+        "@/common/KeyValueDB": "./stubs/KeyValueDB.ts",
         "@/common/": "./lib/src/common/",
         "@/main": "./lib/src/stubs/obsidian.ts",
         "@/deps": "./lib/src/stubs/obsidian.ts",

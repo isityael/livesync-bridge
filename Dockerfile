@@ -13,6 +13,7 @@ COPY deno.jsonc deno.lock ./
 
 # Copy runtime sources (submodule `lib/` is required for import resolution).
 COPY main.ts Hub.ts Peer.ts PeerCouchDB.ts PeerStorage.ts types.ts util.ts ./
+COPY stubs ./stubs
 COPY lib ./lib
 
 # Install npm deps from lock file, then cache all modules.
@@ -32,6 +33,7 @@ COPY --from=builder --chown=1000:1000 /deno-dir /deno-dir
 COPY --from=builder --chown=1000:1000 /app/node_modules /app/node_modules
 COPY --from=builder --chown=1000:1000 /app/deno.jsonc /app/deno.lock /app/
 COPY --from=builder --chown=1000:1000 /app/main.ts /app/Hub.ts /app/Peer.ts /app/PeerCouchDB.ts /app/PeerStorage.ts /app/types.ts /app/util.ts /app/
+COPY --from=builder --chown=1000:1000 /app/stubs /app/stubs
 COPY --from=builder --chown=1000:1000 /app/lib /app/lib
 
 VOLUME /app/dat
