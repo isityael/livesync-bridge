@@ -30,6 +30,15 @@
         "\"npm:(?<depName>(?:@[^/]+/)?[^@]+)@(?<currentValue>[^\"]+)\""
       ],
       "datasourceTemplate": "npm"
+    },
+    {
+      "customType": "regex",
+      "description": "Deno import map jsr: specifiers in deno.jsonc",
+      "managerFilePatterns": ["/deno\\.jsonc?$/"],
+      "matchStrings": [
+        "\"jsr:(?<depName>@[^@/]+/[^@/@]+)@(?<currentValue>[^\"/@]+)"
+      ],
+      "datasourceTemplate": "jsr"
     }
   ],
   "registryAliases": {
