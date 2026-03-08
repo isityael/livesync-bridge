@@ -11,7 +11,7 @@
     "npm:@types/node@*": "24.1.0",
     "npm:@types/pouchdb@*": "6.4.2",
     "npm:@types/pouchdb@^6.4.2": "6.4.2",
-    "npm:brace-expansion@^5.0.3": "5.0.3",
+    "npm:brace-expansion@^5.0.3": "5.0.4",
     "npm:chokidar@5": "5.0.0",
     "npm:diff-match-patch@^1.0.5": "1.0.5",
     "npm:fflate@~0.8.2": "0.8.2",
@@ -203,8 +203,8 @@
     "balanced-match@4.0.4": {
       "integrity": "sha512-BLrgEcRTwX2o6gGxGOCNyMvGSp35YofuYzw9h1IMTRmKqttAZZVU67bdb9Pr2vUHA8+j3i2tJfjO6C6+4myGTA=="
     },
-    "brace-expansion@5.0.3": {
-      "integrity": "sha512-fy6KJm2RawA5RcHkLa1z/ScpBeA762UF9KmZQxwIbDtRJrgLzM10depAiEQ+CXYcoiqW1/m96OAAoke2nE9EeA==",
+    "brace-expansion@5.0.4": {
+      "integrity": "sha512-h+DEnpVvxmfVefa4jFbCf5HdH5YMDXRsmKflpf1pILZWRFlTbJpxeU55nJl4Smt5HQaGzg1o6RHFPJaOqnmBDg==",
       "dependencies": [
         "balanced-match"
       ]
