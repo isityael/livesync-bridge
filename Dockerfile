@@ -27,7 +27,7 @@ RUN deno install --allow-import --frozen --lock=deno.lock \
   && mkdir -p /app/data /app/dat
 
 # Stage 2: Runtime
-FROM harbor.m0sh1.cc/dhi/deno:2.7.4@sha256:59fa6b3b42dd8ea8ca4a180a193d00cb95307b69640806518795ecd29f66208f
+FROM harbor.m0sh1.cc/dhi/deno:2.7.4@sha256:38d563303129c702a18c14215e1e26066269fd46a074d431cb59efd56dd46fc0
 
 WORKDIR /app
 ENV DENO_DIR=/deno-dir \
