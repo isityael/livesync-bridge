@@ -122,6 +122,6 @@ steps:
     cat > $HOME/.config/notation/signingkeys.json <<EOF
     {"default":"harbor","keys":[{"name":"harbor","keyPath":"/tmp/notation/harbor.key","certPath":"/tmp/notation/harbor.crt"}]}
     EOF
-  - printf '{"auths":{"harbor.m0sh1.cc":{"auth":"%s"}}}' "$(printf '%s:%s' "$REGISTRY_USERNAME" "$REGISTRY_PASSWORD" | base64)" > $HOME/.docker/config.json
+  - printf '{"auths":{"harbor.m0sh1.cc":{"auth":"%s"}}}' "$(printf '%s:%s' "$REGISTRY_USERNAME" "$REGISTRY_PASSWORD" | base64 -w0)" > $HOME/.docker/config.json
   - notation sign --force-referrers-tag=false --key harbor $${IMAGE_REF}
   - rm -rf /tmp/notation $HOME/.docker/config.json
