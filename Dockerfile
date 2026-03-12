@@ -46,5 +46,5 @@ VOLUME /app/data
 
 USER 1000:1000
 
-CMD ["deno", "run", "--cached-only", "-A", "main.ts"]
+CMD ["deno", "run", "--cached-only", "--no-lock", "-A", "main.ts"]
 # rebuilt with buildx + signing 2026-02-22
