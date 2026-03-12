@@ -33,8 +33,8 @@ steps:
   image: harbor.m0sh1.cc/dhi/deno:2.6.10-dev
   failure: ignore
   commands:
-  - deno install --allow-import --frozen --lock=deno.lock
-  # Advisory — upstream lib/ has ArrayBuffer compat errors with Deno 2.6.
+  - deno install --allow-import
+  # Advisory — upstream lib/ has ArrayBuffer compat errors with Deno 2.x.
   - deno check --allow-import main.ts
 
 - name: build-and-push

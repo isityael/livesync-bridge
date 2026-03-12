@@ -1,6 +1,6 @@
 # LiveSync Bridge — Release pipeline
 # Triggers on version tags (v*), builds a versioned Docker image,
-# signs it, and creates a Forgejo release.
+# signs it, and creates a GitHub release.
 when:
   - event: tag
     ref: refs/tags/v*
@@ -97,10 +97,11 @@ steps:
       - notation sign --force-referrers-tag=false --key harbor $${IMAGE_REF}
       - rm -rf /tmp/notation $HOME/.docker/config.json
 
-  - name: forgejo-release
+  - name: github-release
     image: woodpeckerci/plugin-release
     settings:
       api_key:
-        from_secret: forgejo_token
+        from_secret: github_token
+      base_url: https://api.github.com
       title: "Release ${CI_COMMIT_TAG}"
       note: "Docker image: `harbor.m0sh1.cc/apps/livesync-bridge:${CI_COMMIT_TAG##v}`"
