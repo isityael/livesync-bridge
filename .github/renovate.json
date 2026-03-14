@@ -41,12 +41,7 @@
       "datasourceTemplate": "jsr"
     }
   ],
-  "registryAliases": {
-    "harbor.m0sh1.cc/dhi": "dhi.io",
-    "harbor.m0sh1.cc/ghcr": "ghcr.io",
-    "harbor.m0sh1.cc/hub": "docker.io",
-    "harbor.m0sh1.cc/quay": "quay.io"
-  },
+  "registryAliases": {},
   "packageRules": [
     {
       "description": "DHI image versioning: variant-locked via compatibility group (e.g., dev only matches dev)",
