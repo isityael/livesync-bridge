@@ -1,64 +1,64 @@
 {
-  "tasks": {
-    "dev": "deno run --watch -A main.ts",
-    "run": "deno run -A main.ts"
-  },
-  "imports": {
-    "@lib/": "./lib/src/",
-    "@lib/worker/bgWorker.ts": "./lib/src/worker/bgWorker.mock.ts",
-    "@lib/worker/bgWorker": "./lib/src/worker/bgWorker.mock.ts",
-    "@lib/pouchdb/pouchdb-browser.ts": "./lib/src/pouchdb/pouchdb-http.ts",
-    "./lib/src/worker/bgWorker.ts": "./lib/src/worker/bgWorker.mock.ts",
-    "./lib/src/worker/bgWorker": "./lib/src/worker/bgWorker.mock.ts",
-    "./lib/src/pouchdb/pouchdb-browser.ts": "./lib/src/pouchdb/pouchdb-http.ts",
-    "@/lib/src/": "./lib/src/",
-    "@/common/events": "./stubs/events.ts",
-    "@/common/KeyValueDB": "./stubs/KeyValueDB.ts",
-    "@/common/": "./lib/src/common/",
-    "@/main": "./stubs/obsidian.ts",
-    "@/deps": "./stubs/obsidian.ts",
-    "svelte": "./stubs/svelte.ts",
-    "fs/walk": "jsr:@std/fs@^1.0.23/",
-    "@std/async": "jsr:@std/async@^1.2.0",
-    "@std/path": "jsr:@std/path@^1.1.4",
-    "@types/diff-match-patch": "npm:@types/diff-match-patch@^1.0.36",
-    "@types/pouchdb": "npm:@types/pouchdb@^6.4.2",
-    "diff-match-patch": "npm:diff-match-patch@^1.0.5",
-    "octagonal-wheels": "npm:octagonal-wheels@^0.1.45",
-    "xxhash-wasm-102": "npm:xxhash-wasm@^1.1.0",
-    "crypto": "node:crypto",
-    "minimatch": "npm:minimatch@^10.2.4",
-    "brace-expansion": "npm:brace-expansion@^5.0.3",
-    "fflate": "npm:fflate@^0.8.2",
-    "pouchdb-core": "npm:pouchdb-core@^9.0.0",
-    "pouchdb-adapter-http": "npm:pouchdb-adapter-http@^9.0.0",
-    "pouchdb-replication": "npm:pouchdb-replication@^9.0.0",
-    "pouchdb-find": "npm:pouchdb-find@^9.0.0",
-    "pouchdb-merge": "npm:pouchdb-merge@^9.0.0",
-    "pouchdb-utils": "npm:pouchdb-utils@^9.0.0",
-    "pouchdb-errors": "npm:pouchdb-errors@^9.0.0",
-    "pouchdb-mapreduce": "npm:pouchdb-mapreduce@^9.0.0",
-    "transform-pouch": "npm:transform-pouch@^2.0.0",
-    "chokidar": "npm:chokidar@^5.0.0",
-    "@types/node": "npm:@types/node@^22"
-  },
-  "lint": {
-    "include": [ "*.ts" ],
-    "exclude": [ "lib/" ],
-    "rules": {
-      "exclude": [
-        "no-explicit-any",
-        "ban-ts-comment",
-        "no-import-prefix",
-        "no-unversioned-import"
-      ]
-    }
-  },
-  "fmt": {
-    "include": [ "*.ts", "deno.jsonc" ],
-    "exclude": [ "lib/" ],
-    "indentWidth": 4
-  },
-  "nodeModulesDir": "manual",
-  "unstable": [ "bare-node-builtins", "sloppy-imports", "byonm" ]
+    "tasks": {
+        "dev": "deno run --watch -A main.ts",
+        "run": "deno run -A main.ts"
+    },
+    "imports": {
+        "@lib/": "./lib/src/",
+        "@lib/worker/bgWorker.ts": "./lib/src/worker/bgWorker.mock.ts",
+        "@lib/worker/bgWorker": "./lib/src/worker/bgWorker.mock.ts",
+        "@lib/pouchdb/pouchdb-browser.ts": "./lib/src/pouchdb/pouchdb-http.ts",
+        "./lib/src/worker/bgWorker.ts": "./lib/src/worker/bgWorker.mock.ts",
+        "./lib/src/worker/bgWorker": "./lib/src/worker/bgWorker.mock.ts",
+        "./lib/src/pouchdb/pouchdb-browser.ts": "./lib/src/pouchdb/pouchdb-http.ts",
+        "@/lib/src/": "./lib/src/",
+        "@/common/events": "./stubs/events.ts",
+        "@/common/KeyValueDB": "./stubs/KeyValueDB.ts",
+        "@/common/": "./lib/src/common/",
+        "@/main": "./stubs/obsidian.ts",
+        "@/deps": "./stubs/obsidian.ts",
+        "svelte": "./stubs/svelte.ts",
+        "fs/walk": "jsr:@std/fs@^1.0.23/",
+        "@std/async": "jsr:@std/async@^1.2.0",
+        "@std/path": "jsr:@std/path@^1.1.4",
+        "@types/diff-match-patch": "npm:@types/diff-match-patch@^1.0.36",
+        "@types/pouchdb": "npm:@types/pouchdb@^6.4.2",
+        "diff-match-patch": "npm:diff-match-patch@^1.0.5",
+        "octagonal-wheels": "npm:octagonal-wheels@^0.1.45",
+        "xxhash-wasm-102": "npm:xxhash-wasm@^1.1.0",
+        "crypto": "node:crypto",
+        "minimatch": "npm:minimatch@^10.2.4",
+        "brace-expansion": "npm:brace-expansion@^5.0.3",
+        "fflate": "npm:fflate@^0.8.2",
+        "pouchdb-core": "npm:pouchdb-core@^9.0.0",
+        "pouchdb-adapter-http": "npm:pouchdb-adapter-http@^9.0.0",
+        "pouchdb-replication": "npm:pouchdb-replication@^9.0.0",
+        "pouchdb-find": "npm:pouchdb-find@^9.0.0",
+        "pouchdb-merge": "npm:pouchdb-merge@^9.0.0",
+        "pouchdb-utils": "npm:pouchdb-utils@^9.0.0",
+        "pouchdb-errors": "npm:pouchdb-errors@^9.0.0",
+        "pouchdb-mapreduce": "npm:pouchdb-mapreduce@^9.0.0",
+        "transform-pouch": "npm:transform-pouch@^2.0.0",
+        "chokidar": "npm:chokidar@^5.0.0",
+        "@types/node": "npm:@types/node@^25"
+    },
+    "lint": {
+        "include": ["*.ts"],
+        "exclude": ["lib/"],
+        "rules": {
+            "exclude": [
+                "no-explicit-any",
+                "ban-ts-comment",
+                "no-import-prefix",
+                "no-unversioned-import"
+            ]
+        }
+    },
+    "fmt": {
+        "include": ["*.ts", "deno.jsonc"],
+        "exclude": ["lib/"],
+        "indentWidth": 4
+    },
+    "nodeModulesDir": "manual",
+    "unstable": ["bare-node-builtins", "sloppy-imports", "byonm"]
 }
