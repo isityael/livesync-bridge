@@ -39,7 +39,8 @@
         "pouchdb-errors": "npm:pouchdb-errors@^9.0.0",
         "pouchdb-mapreduce": "npm:pouchdb-mapreduce@^9.0.0",
         "transform-pouch": "npm:transform-pouch@^2.0.0",
-        "chokidar": "npm:chokidar@^5.0.0"
+        "chokidar": "npm:chokidar@^5.0.0",
+        "@types/node": "npm:@types/node@^22"
     },
     "lint": {
         "include": ["*.ts"],
