@@ -60,7 +60,7 @@ steps:
       build_args:
         - "COMMIT_SHA=${CI_COMMIT_SHA}"
       cache_from: 'type=s3\,endpoint_url=http://garage.garage.svc.cluster.local:3900\,bucket=buildkit-cache\,region=garage\,name=livesync-bridge\,use_path_style=true'
-      cache_to: 'type=s3\,endpoint_url=http://garage.garage.svc.cluster.local:3900\,bucket=buildkit-cache\,region=garage\,name=livesync-bridge\,mode=max\,use_path_style=true\,ignore-error=true'
+      cache_to: 'type=s3,endpoint_url=http://garage.garage.svc.cluster.local:3900,bucket=buildkit-cache,region=garage,name=livesync-bridge,mode=max,use_path_style=true,ignore-error=true'
 
   - name: trivy-scan
     image: dhi.io/trivy:0.69.3-debian13-dev
