@@ -12,11 +12,6 @@ steps:
   - name: build-and-push
     image: woodpeckerci/plugin-docker-buildx
     privileged: true
-    environment:
-      AWS_ACCESS_KEY_ID:
-        from_secret: garage_s3_access_key
-      AWS_SECRET_ACCESS_KEY:
-        from_secret: garage_s3_secret_key
     settings:
       registry: harbor.m0sh1.cc
       repo: *image
@@ -24,15 +19,23 @@ steps:
       tags:
         - "${CI_COMMIT_TAG##v}"
         - latest
-      username:
-        from_secret: harbor_username
-      password:
-        from_secret: harbor_password
+      logins:
+        - registry: harbor.m0sh1.cc
+          username:
+            from_secret: harbor_username
+          password:
+            from_secret: harbor_password
+        - registry: dhi.io
+          username:
+            from_secret: harbor_username
+          password:
+            from_secret: harbor_password
       provenance: mode=max
+      buildkit_driveropt: network=host
       build_args:
         - "COMMIT_SHA=${CI_COMMIT_SHA}"
-      cache_from: 'type=s3\,endpoint_url=http://garage.garage.svc.cluster.local:3900\,bucket=buildkit-cache\,region=garage\,name=livesync-bridge\,use_path_style=true'
-      cache_to: 'type=s3,endpoint_url=http://garage.garage.svc.cluster.local:3900,bucket=buildkit-cache,region=garage,name=livesync-bridge,mode=max,use_path_style=true,ignore-error=true'
+      cache_from: 'type=registry\,ref=harbor.m0sh1.cc/cache/livesync-bridge:buildcache'
+      cache_to: 'type=registry,ref=harbor.m0sh1.cc/cache/livesync-bridge:buildcache,mode=max,ignore-error=true'
 
   - name: trivy-scan
     image: dhi.io/trivy:0.69.3-debian13-dev
