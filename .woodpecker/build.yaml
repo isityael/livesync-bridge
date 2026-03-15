@@ -69,7 +69,7 @@ steps:
     image: dhi.io/busybox:1.37.0-debian13
     commands:
       - echo "Waiting 30s for Garage block replication..."
-      - sleep 30
+      - sleep 60
 
   - name: trivy-scan
     failure: ignore
