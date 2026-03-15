@@ -35,7 +35,7 @@ steps:
       cache_to: 'type=s3,endpoint_url=http://garage.garage.svc.cluster.local:3900,bucket=buildkit-cache,region=garage,name=livesync-bridge,mode=max,use_path_style=true,ignore-error=true'
 
   - name: trivy-scan
-    image: dhi.io/trivy:0.69.1-debian13-dev
+    image: dhi.io/trivy:0.69.3-debian13-dev
     environment:
       IMAGE_REF: "harbor.m0sh1.cc/apps/livesync-bridge:${CI_COMMIT_TAG##v}"
       TRIVY_USERNAME:
@@ -47,7 +47,7 @@ steps:
       - trivy image --exit-code 0 --severity HIGH --ignore-unfixed $${IMAGE_REF}
 
   - name: sbom-generate
-    image: dhi.io/syft:1.42.1-dev
+    image: dhi.io/syft:1.42.2-dev
     environment:
       IMAGE_REF: "harbor.m0sh1.cc/apps/livesync-bridge:${CI_COMMIT_TAG##v}"
       SYFT_REGISTRY_AUTH_AUTHORITY: harbor.m0sh1.cc

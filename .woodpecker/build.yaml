@@ -20,17 +20,17 @@ variables:
 
 steps:
   - name: deno-lint
-    image: dhi.io/deno:2.6.10-dev
+    image: dhi.io/deno:2.7.5-dev
     commands:
       - deno lint
 
   - name: deno-fmt
-    image: dhi.io/deno:2.6.10-dev
+    image: dhi.io/deno:2.7.5-dev
     commands:
       - deno fmt --check
 
   - name: deno-check
-    image: dhi.io/deno:2.6.10-dev
+    image: dhi.io/deno:2.7.5-dev
     failure: ignore
     commands:
       - deno install --allow-import
@@ -75,7 +75,7 @@ steps:
       - trivy image --exit-code 0 --severity HIGH --ignore-unfixed $${IMAGE_REF}
 
   - name: sbom-generate
-    image: dhi.io/syft:1.42.1-dev
+    image: dhi.io/syft:1.42.2-dev
     environment:
       IMAGE_REF: harbor.m0sh1.cc/apps/livesync-bridge:${CI_COMMIT_SHA:0:8}
       SYFT_REGISTRY_AUTH_AUTHORITY: harbor.m0sh1.cc
