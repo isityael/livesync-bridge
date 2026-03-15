@@ -55,9 +55,9 @@ steps:
             from_secret: harbor_password
         - registry: dhi.io
           username:
-            from_secret: harbor_username
+            from_secret: dhi_username
           password:
-            from_secret: harbor_password
+            from_secret: dhi_password
       provenance: mode=max
       buildkit_driveropt: network=host
       build_args:
