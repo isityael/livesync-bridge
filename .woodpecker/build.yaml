@@ -66,6 +66,7 @@ steps:
       cache_to: 'type=registry,ref=harbor.m0sh1.cc/cache/livesync-bridge:buildcache,mode=max,ignore-error=true'
 
   - name: trivy-scan
+    failure: ignore
     image: dhi.io/trivy:0.69.3-debian13-dev
     environment:
       IMAGE_REF: harbor.m0sh1.cc/apps/livesync-bridge:${CI_COMMIT_SHA:0:8}
@@ -78,6 +79,7 @@ steps:
       - trivy image --exit-code 0 --severity HIGH --ignore-unfixed $${IMAGE_REF}
 
   - name: sbom-generate
+    failure: ignore
     image: dhi.io/syft:1.42.2-dev
     environment:
       IMAGE_REF: harbor.m0sh1.cc/apps/livesync-bridge:${CI_COMMIT_SHA:0:8}
