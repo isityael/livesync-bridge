@@ -64,7 +64,7 @@ steps:
       - syft registry:$${IMAGE_REF} -o spdx-json > sbom.spdx.json
 
   - name: cosign-sign
-    image: dhi.io/cosign:3.0.5-debian13-dev@sha256:75d08035bfa25d496c7de3990500f375b314de3d75e6094b6ed19d37a7b9b080
+    image: dhi.io/cosign:3.0.5-debian13-dev@sha256:4aaf9ee40f2b0aff8f7dadf020be9c75729e7212ad28585594f522d140d67aa0
     environment:
       IMAGE_REF: "harbor.m0sh1.cc/apps/livesync-bridge:${CI_COMMIT_TAG##v}"
       COSIGN_EXPERIMENTAL: "1"
