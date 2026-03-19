@@ -20,17 +20,17 @@ variables:
 
 steps:
   - name: deno-lint
-    image: dhi.io/deno:2.7.5-dev@sha256:d34fead558bea6e857ca5675669fc14be91a62d55f8c60ddeb630fef2182d694
+    image: dhi.io/deno:2.7.6-dev@sha256:798b7f98f1253874cf782631fcef11fe7c487bb77c345f458817b0fcaed107f2
     commands:
       - deno lint
 
   - name: deno-fmt
-    image: dhi.io/deno:2.7.5-dev@sha256:d34fead558bea6e857ca5675669fc14be91a62d55f8c60ddeb630fef2182d694
+    image: dhi.io/deno:2.7.6-dev@sha256:798b7f98f1253874cf782631fcef11fe7c487bb77c345f458817b0fcaed107f2
     commands:
       - deno fmt --check
 
   - name: deno-check
-    image: dhi.io/deno:2.7.5-dev@sha256:d34fead558bea6e857ca5675669fc14be91a62d55f8c60ddeb630fef2182d694
+    image: dhi.io/deno:2.7.6-dev@sha256:798b7f98f1253874cf782631fcef11fe7c487bb77c345f458817b0fcaed107f2
     failure: ignore
     commands:
       - deno install --allow-import

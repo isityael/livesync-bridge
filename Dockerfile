@@ -1,7 +1,7 @@
 # Stage 1: Cache modules and transpilation artifacts
 #
 # Policy: prefer glibc-based images for networked apps (Service DNS, CouchDB client).
-FROM dhi.io/deno:2.7.5-dev@sha256:d34fead558bea6e857ca5675669fc14be91a62d55f8c60ddeb630fef2182d694 AS builder
+FROM dhi.io/deno:2.7.6-dev@sha256:798b7f98f1253874cf782631fcef11fe7c487bb77c345f458817b0fcaed107f2 AS builder
 
 WORKDIR /app
 ENV DENO_DIR=/deno-dir \
@@ -27,7 +27,7 @@ RUN deno install --allow-import \
   && mkdir -p /app/data /app/dat
 
 # Stage 2: Runtime
-FROM dhi.io/deno:2.7.5@sha256:5c75e4a346d4d506b0299c50c9db4358b70def97566492870db83b94a0d6152a
+FROM dhi.io/deno:2.7.6@sha256:ee763367f9f5a95d2a2ac123a7beb5b6564b6384861693af3d95ca0bb7519add
 
 WORKDIR /app
 ENV DENO_DIR=/deno-dir \
