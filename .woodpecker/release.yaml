@@ -84,7 +84,7 @@ steps:
       - rm -f /tmp/cosign.key sbom.spdx.json
 
   - name: notation-sign
-    image: dhi.io/notation:1.3.2-debian13-dev@sha256:1837c85a13e06ab2fc739e4c760df9dd630ad8d97b8951e8f08c0abcf682862d
+    image: dhi.io/notation:1.3.2-debian13-dev@sha256:4d6c7ac4a8be8b8dc63717c39edcd930500bef455599a97135267518492793bf
     environment:
       IMAGE_REF: "harbor.m0sh1.cc/apps/livesync-bridge:${CI_COMMIT_TAG##v}"
       NOTATION_KEY:
