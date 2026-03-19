@@ -27,7 +27,7 @@ RUN deno install --allow-import \
   && mkdir -p /app/data /app/dat
 
 # Stage 2: Runtime
-FROM dhi.io/deno:2.7.5@sha256:5c75e4a346d4d506b0299c50c9db4358b70def97566492870db83b94a0d6152a
+FROM dhi.io/deno:2.7.5@sha256:28fbac002152f6120d9d582cd7832ab812dc79d6f3d888f48bdbd5b8793e9f77
 
 WORKDIR /app
 ENV DENO_DIR=/deno-dir \
