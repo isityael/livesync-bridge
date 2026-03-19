@@ -86,7 +86,7 @@ steps:
 
   - name: sbom-generate
     failure: ignore
-    image: dhi.io/syft:1.42.2-dev@sha256:bb414be38610bba7c6b3652dff76d715b6ccdee6aa7a392694c5d33d5f05bd75
+    image: dhi.io/syft:1.42.2-dev@sha256:f5428e6b146e78efe5c4c5ad1420134322c1818462d1914aa986c9b1daf253ce
     environment:
       IMAGE_REF: harbor.m0sh1.cc/apps/livesync-bridge:${CI_COMMIT_SHA:0:8}
       SYFT_REGISTRY_AUTH_AUTHORITY: harbor.m0sh1.cc
