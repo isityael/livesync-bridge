@@ -4,7 +4,7 @@
     "config:best-practices",
     ":preserveSemverRanges"
   ],
-  "platformAutomerge": false,
+  "platformAutomerge": true,
   "dependencyDashboard": true,
   "dependencyDashboardApproval": true,
   "timezone": "Europe/Berlin",
@@ -26,7 +26,7 @@
     {
       "customType": "regex",
       "description": "Deno import map npm: specifiers in deno.jsonc",
-      "managerFilePatterns": ["/deno\\.jsonc?$/"],
+      "managerFilePatterns": ["/deno\.jsonc?$/"],
       "matchStrings": [
         "\"npm:(?<depName>(?:@[^/]+/)?[^@]+)@(?<currentValue>[^\"]+)\""
       ],
@@ -35,7 +35,7 @@
     {
       "customType": "regex",
       "description": "Deno import map jsr: specifiers in deno.jsonc",
-      "managerFilePatterns": ["/deno\\.jsonc?$/"],
+      "managerFilePatterns": ["/deno\.jsonc?$/"],
       "matchStrings": [
         "\"jsr:(?<depName>@[^@/]+/[^@/@]+)@(?<currentValue>[^\"/@]+)"
       ],
@@ -47,8 +47,8 @@
     {
       "description": "DHI image versioning: variant-locked via compatibility group (e.g., dev only matches dev)",
       "matchDatasources": ["docker"],
-      "matchPackageNames": ["/^dhi\\.io\\//"],
-      "versioning": "regex:^(?<major>\\d+)(\\.(?<minor>\\d+))?(\\.(?<patch>\\d+))?(-(?<compatibility>.+))?$"
+      "matchPackageNames": ["/^dhi\.io\//"],
+      "versioning": "regex:^(?<major>\d+)(\.(?<minor>\d+))?(\.(?<patch>\d+))?(-(?<compatibility>.+))?$"
     },
     {
       "matchManagers": [
@@ -65,8 +65,19 @@
       ],
       "enabled": false,
       "matchPackageNames": [
-        "/^harbor\\.m0sh1\\.cc\\/apps\\//"
+        "/^harbor\.m0sh1\.cc\/apps\//"
       ]
+    },
+    {
+      "description": "Auto-merge Deno package patch and minor updates — low blast radius",
+      "matchManagers": ["custom.regex"],
+      "matchUpdateTypes": ["patch", "minor"],
+      "automerge": true
+    },
+    {
+      "description": "Auto-merge Woodpecker image updates",
+      "matchManagers": ["woodpecker"],
+      "automerge": true
     }
   ]
 }
