@@ -4,29 +4,16 @@
     "config:best-practices",
     ":preserveSemverRanges"
   ],
-  "platformAutomerge": true,
-  "dependencyDashboard": true,
-  "dependencyDashboardApproval": true,
-  "timezone": "Europe/Berlin",
-  "schedule": [
-    "at any time"
-  ],
-  "prHourlyLimit": 5,
-  "prConcurrentLimit": 3,
   "enabledManagers": [
     "dockerfile",
     "woodpecker",
     "custom.regex"
   ],
-  "labels": [
-    "dependencies"
-  ],
-  "pinDigests": false,
   "customManagers": [
     {
       "customType": "regex",
       "description": "Deno import map npm: specifiers in deno.jsonc",
-      "managerFilePatterns": ["/deno\.jsonc?$/"],
+      "managerFilePatterns": ["/deno\\.jsonc?$/"],
       "matchStrings": [
         "\"npm:(?<depName>(?:@[^/]+/)?[^@]+)@(?<currentValue>[^\"]+)\""
       ],
@@ -35,48 +22,22 @@
     {
       "customType": "regex",
       "description": "Deno import map jsr: specifiers in deno.jsonc",
-      "managerFilePatterns": ["/deno\.jsonc?$/"],
+      "managerFilePatterns": ["/deno\\.jsonc?$/"],
       "matchStrings": [
         "\"jsr:(?<depName>@[^@/]+/[^@/@]+)@(?<currentValue>[^\"/@]+)"
       ],
       "datasourceTemplate": "jsr"
     }
   ],
-  "registryAliases": {},
   "packageRules": [
     {
-      "description": "DHI image versioning: variant-locked via compatibility group (e.g., dev only matches dev)",
-      "matchDatasources": ["docker"],
-      "matchPackageNames": ["/^dhi\.io\//"],
-      "versioning": "regex:^(?<major>\d+)(\.(?<minor>\d+))?(\.(?<patch>\d+))?(-(?<compatibility>.+))?$"
-    },
-    {
-      "matchManagers": [
-        "dockerfile"
-      ],
-      "addLabels": [
-        "docker"
-      ]
-    },
-    {
-      "description": "Ignore our own built images — not trackable upstream",
-      "matchManagers": [
-        "dockerfile"
-      ],
-      "enabled": false,
-      "matchPackageNames": [
-        "/^harbor\.m0sh1\.cc\/apps\//"
-      ]
+      "matchManagers": ["dockerfile"],
+      "addLabels": ["docker"]
     },
     {
       "description": "Auto-merge Deno package patch and minor updates — low blast radius",
       "matchManagers": ["custom.regex"],
       "matchUpdateTypes": ["patch", "minor"],
-      "automerge": true
-    },
-    {
-      "description": "Auto-merge Woodpecker image updates",
-      "matchManagers": ["woodpecker"],
       "automerge": true
     }
   ]
