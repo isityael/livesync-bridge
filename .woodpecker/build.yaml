@@ -20,17 +20,17 @@ variables:
 
 steps:
   - name: deno-lint
-    image: dhi.io/deno:2.7.6-dev@sha256:798b7f98f1253874cf782631fcef11fe7c487bb77c345f458817b0fcaed107f2
+    image: dhi.io/deno:2.7.7-dev@sha256:ef7e217a7a2a5683702878faf08a0cbbd4f442988c9216cf2305d28f5940c086
     commands:
       - deno lint
 
   - name: deno-fmt
-    image: dhi.io/deno:2.7.6-dev@sha256:798b7f98f1253874cf782631fcef11fe7c487bb77c345f458817b0fcaed107f2
+    image: dhi.io/deno:2.7.7-dev@sha256:ef7e217a7a2a5683702878faf08a0cbbd4f442988c9216cf2305d28f5940c086
     commands:
       - deno fmt --check
 
   - name: deno-check
-    image: dhi.io/deno:2.7.6-dev@sha256:798b7f98f1253874cf782631fcef11fe7c487bb77c345f458817b0fcaed107f2
+    image: dhi.io/deno:2.7.7-dev@sha256:ef7e217a7a2a5683702878faf08a0cbbd4f442988c9216cf2305d28f5940c086
     failure: ignore
     commands:
       - deno install --allow-import
@@ -86,7 +86,7 @@ steps:
 
   - name: sbom-generate
     failure: ignore
-    image: dhi.io/syft:1.42.2-alpine3.23-dev@sha256:135133fc242b9083ed879c141d7af46ad65870abd1d8f335876bcf498457129a
+    image: dhi.io/syft:1.42.3-alpine3.23-dev@sha256:4eab5015cabe1d673002872f37f7195957e3f1197bb2d611f993ac56a542c59d
     environment:
       IMAGE_REF: harbor.m0sh1.cc/apps/livesync-bridge:${CI_COMMIT_SHA:0:8}
       SYFT_REGISTRY_AUTH_AUTHORITY: harbor.m0sh1.cc
