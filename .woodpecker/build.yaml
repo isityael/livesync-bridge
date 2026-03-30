@@ -66,7 +66,7 @@ steps:
       cache_to: 'type=registry,ref=harbor.m0sh1.cc/cache/livesync-bridge:buildcache,mode=max,ignore-error=true'
 
   - name: wait-for-replication
-    image: dhi.io/busybox:1.37.0-alpine3.23@sha256:7fba924e6cb64df717e47578f07fc604c95560d6d17bf47f4fc98917d5edbd28
+    image: dhi.io/busybox:1.37.0@sha256:79bda0e2bc36fdd29bc3cfb13ce47704e2eb1a2db423ab6e7db891bb1c5c3895
     commands:
       - echo "Waiting 10s for Garage replication..."
       - sleep 10
