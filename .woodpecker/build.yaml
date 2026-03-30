@@ -17,20 +17,21 @@ when:
 variables:
   - &image "harbor.m0sh1.cc/apps/livesync-bridge"
   - &image_tag "${CI_COMMIT_SHA:0:8}"
+  - &deno_image "dhi.io/deno:2.7.9-dev@sha256:0a1275fa5886fa9dcddd198a6a168463a29ead02a57e3c080652be993de31ee8"
 
 steps:
   - name: deno-lint
-    image: dhi.io/deno:2.7.9-dev@sha256:0a1275fa5886fa9dcddd198a6a168463a29ead02a57e3c080652be993de31ee8
+    image: *deno_image
     commands:
       - deno lint
 
   - name: deno-fmt
-    image: dhi.io/deno:2.7.9-dev@sha256:0a1275fa5886fa9dcddd198a6a168463a29ead02a57e3c080652be993de31ee8
+    image: *deno_image
     commands:
       - deno fmt --check
 
   - name: deno-check
-    image: dhi.io/deno:2.7.9-dev@sha256:0a1275fa5886fa9dcddd198a6a168463a29ead02a57e3c080652be993de31ee8
+    image: *deno_image
     failure: ignore
     commands:
       - deno install --allow-import
@@ -66,7 +67,7 @@ steps:
       cache_to: 'type=registry,ref=harbor.m0sh1.cc/cache/livesync-bridge:buildcache,mode=max,ignore-error=true'
 
   - name: wait-for-replication
-    image: dhi.io/busybox:1.37.0@sha256:79bda0e2bc36fdd29bc3cfb13ce47704e2eb1a2db423ab6e7db891bb1c5c3895
+    image: *deno_image
     commands:
       - echo "Waiting 10s for Garage replication..."
       - sleep 10
