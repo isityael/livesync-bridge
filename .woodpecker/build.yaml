@@ -17,7 +17,7 @@ when:
 variables:
   - &image "harbor.m0sh1.cc/apps/livesync-bridge"
   - &image_tag "${CI_COMMIT_SHA:0:8}"
-  - &deno_image "dhi.io/deno:2.7.9-dev@sha256:0a1275fa5886fa9dcddd198a6a168463a29ead02a57e3c080652be993de31ee8"
+  - &deno_image "dhi.io/deno:2.7.11-dev@sha256:6778205b6bd3cad8b9a0f023505624b9e928ed625811af5b9c532200650ca95c"
 
 steps:
   - name: deno-lint
@@ -74,7 +74,7 @@ steps:
 
   - name: trivy-scan
     failure: ignore
-    image: dhi.io/trivy:0.69.3-alpine3.23-dev@sha256:6d5b5412b2816909eef33d33870c23175fb27f70d5792bfbdcc0a0f60063da67
+    image: dhi.io/trivy:0.69.3-alpine3.23-dev@sha256:b7080d272848134e21d385ace2c6f38a230d51107466c777dbd14d2b64c0d919
     environment:
       IMAGE_REF: harbor.m0sh1.cc/apps/livesync-bridge:${CI_COMMIT_SHA:0:8}
       TRIVY_USERNAME:
