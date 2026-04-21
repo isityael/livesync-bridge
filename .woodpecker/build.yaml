@@ -74,7 +74,7 @@ steps:
 
   - name: trivy-scan
     failure: ignore
-    image: dhi.io/trivy:0.69.3-alpine3.23-dev@sha256:7e57ba1ed61d0ecfe3f1e13a120d03da0b4c28d09af6591d66e8b990770b749c
+    image: dhi.io/trivy:0.69.3-alpine3.23-dev@sha256:372e1031e45f4d39d2c46b1bf63cd2ac02bc2949dcfc2ff8684c51eec88b93a2
     environment:
       IMAGE_REF: harbor.m0sh1.cc/apps/livesync-bridge:${CI_COMMIT_SHA:0:8}
       TRIVY_USERNAME:
@@ -99,7 +99,7 @@ steps:
       - syft registry:$${IMAGE_REF} -o spdx-json > sbom.spdx.json
 
   - name: cosign-sign
-    image: dhi.io/cosign:3.0.6-alpine3.23-dev@sha256:da4790e615162b9ea07451ae877e253d33ab2305fc3b7c4a1e6f258f36c11b47
+    image: dhi.io/cosign:3.0.6-alpine3.23-dev@sha256:3c7dd15e6f936e91c1175f42b77ce8ce1b003fc707090fea060c520fd30f93dd
     environment:
       IMAGE_REF: harbor.m0sh1.cc/apps/livesync-bridge:${CI_COMMIT_SHA:0:8}
       COSIGN_EXPERIMENTAL: "1"
