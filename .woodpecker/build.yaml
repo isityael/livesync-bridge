@@ -39,7 +39,7 @@ steps:
       - deno check --allow-import main.ts
 
   - name: build-and-push
-    image: woodpeckerci/plugin-docker-buildx@sha256:26a2f1557eade820ed4ed34cd5d703d8ab186eee486fe2512e8d8788867193f7
+    image: woodpeckerci/plugin-docker-buildx@sha256:10b63eab1d9d709b05aede422991f9963c9895480fd8d65ec6ea30e67a8fde65
     privileged: true
     settings:
       registry: harbor.m0sh1.cc
