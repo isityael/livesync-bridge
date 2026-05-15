@@ -135,9 +135,20 @@ try {
     const confText = await Deno.readTextFile(configFile);
     config = JSON.parse(confText);
 } catch (ex) {
-    console.error("Could not parse configuration!");
+    console.error("Could not load or parse configuration!");
     console.error(ex);
+    Deno.exit(1);
+}
+if (!Array.isArray(config.peers) || config.peers.length === 0) {
+    console.error("Configuration must define at least one peer.");
+    Deno.exit(1);
 }
 console.log("LiveSync Bridge is now started!");
 const hub = new Hub(config);
-hub.start();
+try {
+    await hub.start();
+} catch (ex) {
+    console.error("LiveSync Bridge startup failed!");
+    console.error(ex);
+    Deno.exit(1);
+}

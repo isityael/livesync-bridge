@@ -42,6 +42,47 @@ export abstract class Peer {
         // this.debugLog(`**TOLOCAL: ${pathSrc} => ${path}`);
         return path;
     }
+    protected isSafeRelativePath(path: string): boolean {
+        if (!path || path.includes("\0")) return false;
+        if (path.startsWith("/") || path.startsWith("\\")) return false;
+
+        const parts = path.split(/[\\/]+/);
+        return !parts.some((part) => part === "..");
+    }
+    private globToRegex(glob: string): RegExp {
+        const escaped = glob
+            .replace(/[.+?^${}()|[\]\\]/g, "\\$&")
+            .replace(/\*/g, ".*");
+        return new RegExp(`^${escaped}$`);
+    }
+    protected shouldIgnoreRelativePath(relativePath: string): boolean {
+        const patterns = this.config.ignorePaths ?? [];
+        if (patterns.length === 0) return false;
+
+        const normalizedPath = relativePath
+            .replace(/\\/g, "/")
+            .replace(/^\/+/, "");
+        const segments = normalizedPath.split("/").filter(Boolean);
+        if (segments.length === 0) return false;
+
+        for (const rawPattern of patterns) {
+            const pattern = rawPattern
+                .trim()
+                .replace(/^\.\/+/, "")
+                .replace(/\/+$/, "");
+            if (!pattern) continue;
+            const matcher = this.globToRegex(pattern);
+
+            if (pattern.includes("/")) {
+                if (matcher.test(normalizedPath)) return true;
+                continue;
+            }
+
+            if (segments.some((segment) => matcher.test(segment))) return true;
+        }
+
+        return false;
+    }
     abstract delete(path: string): Promise<boolean>;
     abstract put(path: string, data: FileData): Promise<boolean>;
     abstract get(path: FilePathWithPrefix): Promise<false | FileData>;

@@ -268,7 +268,12 @@ export class PeerCouchDB extends Peer {
             (entry) => {
                 this.setSetting("since", this.man.since);
                 if (entry.path.indexOf(":") !== -1) return false;
-                return entry.path.startsWith(baseDir);
+                if (!entry.path.startsWith(baseDir)) return false;
+                let path = entry.path.substring(baseDir.length);
+                if (path.startsWith("/")) {
+                    path = path.substring(1);
+                }
+                return !this.shouldIgnoreRelativePath(path);
             },
         );
     }

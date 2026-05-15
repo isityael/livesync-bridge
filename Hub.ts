@@ -9,9 +9,9 @@ export class Hub {
     constructor(conf: Config) {
         this.conf = conf;
     }
-    start() {
+    async start() {
         for (const p of this.peers) {
-            p.stop();
+            await p.stop();
         }
         this.peers = [];
         for (const peer of this.conf.peers) {
@@ -29,9 +29,7 @@ export class Hub {
                 );
             }
         }
-        for (const p of this.peers) {
-            p.start();
-        }
+        await Promise.all(this.peers.map((p) => p.start()));
     }
 
     async dispatch(source: Peer, path: string, data: FileData | false) {
