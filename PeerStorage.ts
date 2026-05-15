@@ -7,7 +7,14 @@ import { FileData, PeerStorageConf } from "./types.ts";
 import { Logger } from "./lib/src/common/logger.ts";
 import { delay, getDocData } from "./lib/src/common/utils.ts";
 import { isPlainText } from "./lib/src/string_and_binary/path.ts";
-import { dirname, format, parse, relative, resolve } from "@std/path";
+import {
+    dirname,
+    format,
+    isAbsolute,
+    parse,
+    relative,
+    resolve,
+} from "@std/path";
 import { format as posixFormat, parse as posixParse } from "@std/path/posix";
 import { scheduleOnceIfDuplicated } from "octagonal-wheels/concurrency/lock";
 import { DispatchFun, Peer } from "./Peer.ts";
@@ -24,8 +31,9 @@ export class PeerStorage extends Peer {
     }
 
     async delete(pathSrc: string): Promise<boolean> {
-        const lp = this.toLocalPath(pathSrc);
-        const path = this.toStoragePath(lp);
+        const resolved = this.resolveStoragePath(pathSrc);
+        if (!resolved) return false;
+        const { localPath: lp, storagePath: path } = resolved;
         if (await this.isRepeating(lp, false)) {
             return false;
         }
@@ -47,8 +55,9 @@ export class PeerStorage extends Peer {
         return true;
     }
     async put(pathSrc: string, data: FileData): Promise<boolean> {
-        const lp = this.toLocalPath(pathSrc);
-        const path = this.toStoragePath(lp);
+        const resolved = this.resolveStoragePath(pathSrc);
+        if (!resolved) return false;
+        const { localPath: lp, storagePath: path } = resolved;
         if (await this.isRepeating(lp, data)) {
             this.receiveLog(`${lp} save repeating`);
             return false;
@@ -66,17 +75,20 @@ export class PeerStorage extends Peer {
                 write: true,
                 create: true,
             });
-            if (data.data instanceof Uint8Array) {
-                const writtensize = await fp.write(data.data);
-                await fp.truncate(writtensize);
-            } else {
-                const writtensize = await fp.write(
-                    new TextEncoder().encode(getDocData(data.data)),
-                );
-                await fp.truncate(writtensize);
+            try {
+                if (data.data instanceof Uint8Array) {
+                    const writtensize = await fp.write(data.data);
+                    await fp.truncate(writtensize);
+                } else {
+                    const writtensize = await fp.write(
+                        new TextEncoder().encode(getDocData(data.data)),
+                    );
+                    await fp.truncate(writtensize);
+                }
+                await fp.utime(new Date(data.mtime), new Date(data.mtime));
+            } finally {
+                fp.close();
             }
-            await fp.utime(new Date(data.mtime), new Date(data.mtime));
-            fp.close();
             this.receiveLog(`${lp} saved`);
             await this.writeFileStat(pathSrc);
             this.runScript(path, false);
@@ -151,8 +163,9 @@ export class PeerStorage extends Peer {
     }
 
     async get(pathSrc: string): Promise<false | FileData> {
-        const lp = this.toLocalPath(pathSrc);
-        const path = this.toStoragePath(lp);
+        const resolved = this.resolveStoragePath(pathSrc);
+        if (!resolved) return false;
+        const path = resolved.storagePath;
         let stat: Deno.FileInfo;
         try {
             stat = await Deno.stat(path);
@@ -178,57 +191,18 @@ export class PeerStorage extends Peer {
         }
         return ret;
     }
-    watcher?: chokidar.FSWatcher;
-
-    private globToRegex(glob: string): RegExp {
-        const escaped = glob
-            .replace(/[.+?^${}()|[\]\\]/g, "\\$&")
-            .replace(/\*/g, ".*");
-        return new RegExp(`^${escaped}$`);
-    }
-
-    private shouldIgnoreRelativePath(relativePath: string): boolean {
-        const patterns = this.config.ignorePaths ?? [];
-        if (patterns.length === 0) return false;
-
-        const normalizedPath = this.toPosixPath(relativePath).replace(
-            /^\/+/,
-            "",
-        );
-        const segments = normalizedPath.split("/").filter(Boolean);
-        if (segments.length === 0) return false;
-
-        for (const rawPattern of patterns) {
-            const pattern = rawPattern
-                .trim()
-                .replace(/^\.\/+/, "")
-                .replace(/\/+$/, "");
-            if (!pattern) continue;
-            const matcher = this.globToRegex(pattern);
-
-            // If pattern contains path separators, match against full relative path.
-            if (pattern.includes("/")) {
-                if (matcher.test(normalizedPath)) return true;
-                continue;
-            }
-
-            // Segment-level matching (e.g. ".git", "node_modules", "*.tmp").
-            if (segments.some((segment) => matcher.test(segment))) return true;
-        }
-
-        return false;
-    }
+    watcher?: ReturnType<typeof chokidar.watch>;
 
     private shouldIgnoreAbsolutePath(pathAbs: string): boolean {
-        const lP = this.toStoragePath(this.toLocalPath("."));
+        const lP = this.storageRootPath();
         const relPath = this.toPosixPath(relative(lP, pathAbs));
         if (!relPath || relPath === ".") return false;
-        if (relPath.startsWith("..")) return true;
+        if (relPath === ".." || relPath.startsWith("../")) return true;
         return this.shouldIgnoreRelativePath(relPath);
     }
 
     async dispatch(pathSrc: string) {
-        const lP = this.toStoragePath(this.toLocalPath("."));
+        const lP = this.storageRootPath();
         const path = this.toPosixPath(relative(lP, pathSrc));
         if (this.shouldIgnoreRelativePath(path)) {
             return;
@@ -252,7 +226,7 @@ export class PeerStorage extends Peer {
         });
     }
     async dispatchDeleted(pathSrc: string) {
-        const lP = this.toStoragePath(this.toLocalPath("."));
+        const lP = this.storageRootPath();
         const path = this.toPosixPath(relative(lP, pathSrc));
         if (this.shouldIgnoreRelativePath(path)) {
             return;
@@ -276,11 +250,47 @@ export class PeerStorage extends Peer {
         // this.debugLog(`**TOSTORAGE ${path} -> ${ret}`)
         return ret;
     }
+    private storageRootPath() {
+        return this.toStoragePath(this.toLocalPath("."));
+    }
+    private resolveStoragePath(pathSrc: string):
+        | { localPath: string; storagePath: string }
+        | false {
+        if (!this.isSafeRelativePath(pathSrc)) {
+            this.receiveLog(
+                ` ${pathSrc} rejected unsafe path`,
+                LOG_LEVEL_NOTICE,
+            );
+            return false;
+        }
+
+        const localPath = this.toLocalPath(pathSrc);
+        const storageRoot = this.storageRootPath();
+        const storageRelative = pathSrc.replace(/^\/+/, "");
+        const storagePath = resolve(
+            storageRoot,
+            format(posixParse(storageRelative)),
+        );
+        const relPath = relative(storageRoot, storagePath);
+        if (
+            relPath === "" || relPath === "." ||
+            (!relPath.startsWith("..") && !isAbsolute(relPath))
+        ) {
+            return { localPath, storagePath };
+        }
+
+        this.receiveLog(
+            ` ${pathSrc} rejected outside storage root`,
+            LOG_LEVEL_NOTICE,
+        );
+        return false;
+    }
 
     async writeFileStat(pathSrc: string, statSrc?: Deno.FileInfo) {
-        const lp = this.toLocalPath(pathSrc);
+        const resolved = this.resolveStoragePath(pathSrc);
+        if (!resolved) return false;
+        const { localPath: lp, storagePath: path } = resolved;
         const key = `file-stat-${lp}`;
-        const path = this.toStoragePath(lp);
         const stat = statSrc ?? (await Deno.stat(path));
         if (!stat.isFile) {
             return false;
@@ -290,13 +300,14 @@ export class PeerStorage extends Peer {
     }
 
     async isChanged(pathSrc: string) {
-        const lp = this.toLocalPath(pathSrc);
+        const resolved = this.resolveStoragePath(pathSrc);
+        if (!resolved) return false;
+        const { localPath: lp, storagePath: path } = resolved;
         const key = `file-stat-${lp}`;
         const last = this.getSetting(key);
         // console.log(`R:${key}`);
         // console.log(`RV:${last}`);
 
-        const path = this.toStoragePath(lp);
         const stat = await Deno.stat(path);
         if (!stat.isFile) {
             return false;
@@ -334,7 +345,7 @@ export class PeerStorage extends Peer {
             this.watcherDeno.close();
             this.watcherDeno = undefined;
         }
-        const lP = this.toStoragePath(this.toLocalPath("."));
+        const lP = this.storageRootPath();
         this.normalLog(
             `Scan offline changes: ${
                 this.config.scanOfflineChanges
@@ -346,7 +357,7 @@ export class PeerStorage extends Peer {
             for await (const entry of walk(lP)) {
                 if (entry.isFile) {
                     const ePath = this.toPosixPath(
-                        relative(this.toLocalPath("."), entry.path),
+                        relative(lP, entry.path),
                     );
                     if (this.shouldIgnoreRelativePath(ePath)) {
                         continue;
@@ -377,7 +388,7 @@ export class PeerStorage extends Peer {
             this.watcher.close();
             this.watcher = undefined;
         }
-        const lP = this.toStoragePath(this.toLocalPath("."));
+        const lP = this.storageRootPath();
         this.normalLog(
             `Scan offline changes: ${
                 this.config.scanOfflineChanges
@@ -393,9 +404,9 @@ export class PeerStorage extends Peer {
             },
         });
 
-        this.watcher.on("change", async (path) => {
+        this.watcher.on("change", async (path: string) => {
             const ePath = this.toPosixPath(
-                relative(this.toLocalPath("."), path),
+                relative(lP, path),
             );
             if (!(await this.isChanged(ePath))) {
                 // this.debugLog(`Not changed: ${ePath}`);
@@ -404,9 +415,9 @@ export class PeerStorage extends Peer {
                 await this.dispatch(path);
             }
         });
-        this.watcher.on("add", async (path) => {
+        this.watcher.on("add", async (path: string) => {
             const ePath = this.toPosixPath(
-                relative(this.toLocalPath("."), path),
+                relative(lP, path),
             );
             if (!(await this.isChanged(ePath))) {
                 // this.debugLog(`Not changed: ${ePath}`);
@@ -415,9 +426,9 @@ export class PeerStorage extends Peer {
                 await this.dispatch(path);
             }
         });
-        this.watcher.on("unlink", async (path) => {
+        this.watcher.on("unlink", async (path: string) => {
             const ePath = this.toPosixPath(
-                relative(this.toLocalPath("."), path),
+                relative(lP, path),
             );
             this.debugLog(`Unlink detected: ${ePath}`);
             await this.dispatchDeleted(path);

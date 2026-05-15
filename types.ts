@@ -23,6 +23,7 @@ export interface PeerCouchDBConf extends DirectFileManipulatorOptions {
     useRemoteTweaks?: true;
     group?: string;
     name: string;
+    ignorePaths?: string[];
     database: string;
     username: string;
     password: string;
