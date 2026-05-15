@@ -14,8 +14,8 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: koki-develop/claude-renovate-review@v1
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: koki-develop/claude-renovate-review@7e3883b2c3d9e93dc18fe065ad1315f9072b26de # v1
         id: review
         with:
           claude-code-oauth-token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
