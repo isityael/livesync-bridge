@@ -26,7 +26,7 @@
         "@std/async": "jsr:@std/async@^1.2.0",
         "@std/path": "jsr:@std/path@^1.1.4",
         "@types/pouchdb": "npm:@types/pouchdb@^6.4.2",
-        "diff": "npm:diff@^8.0.2",
+        "diff": "npm:diff@^9.0.0",
         "octagonal-wheels": "npm:octagonal-wheels@^0.1.45",
         "xxhash-wasm-102": "npm:xxhash-wasm@^1.1.0",
         "crypto": "node:crypto",
