@@ -9,10 +9,11 @@
     "jsr:@std/path@*": "1.1.4",
     "jsr:@std/path@^1.1.4": "1.1.4",
     "npm:@types/node@^25.5.0": "25.5.0",
+    "npm:@types/pouchdb@*": "6.4.2",
     "npm:@types/pouchdb@^6.4.2": "6.4.2",
     "npm:brace-expansion@^5.0.5": "5.0.5",
     "npm:chokidar@5": "5.0.0",
-    "npm:diff@^8.0.2": "8.0.4",
+    "npm:diff@9": "9.0.0",
     "npm:fflate@~0.8.2": "0.8.2",
     "npm:minimatch@^10.2.5": "10.2.5",
     "npm:octagonal-wheels@~0.1.45": "0.1.45",
@@ -208,8 +209,8 @@
         "readdirp"
       ]
     },
-    "diff@8.0.4": {
-      "integrity": "sha512-DPi0FmjiSU5EvQV0++GFDOJ9ASQUVFh5kD+OzOnYdi7n3Wpm9hWWGfB/O2blfHcMVTL5WkQXSnRiK9makhrcnw=="
+    "diff@9.0.0": {
+      "integrity": "sha512-svtcdpS8CgJyqAjEQIXdb3OjhFVVYjzGAPO8WGCmRbrml64SPw/jJD4GoE98aR7r25A0XcgrK3F02yw9R/vhQw=="
     },
     "fflate@0.8.2": {
       "integrity": "sha512-cPJU47OaAoCbg0pBvzsgpTPhmhqI5eJjh/JIu8tPj5q+T7iLvW/JAYUqmE7KOB4R1ZyEhzBaIQpQpardBF5z8A=="
@@ -249,7 +250,7 @@
       "npm:@types/pouchdb@^6.4.2",
       "npm:brace-expansion@^5.0.5",
       "npm:chokidar@5",
-      "npm:diff@^8.0.2",
+      "npm:diff@9",
       "npm:fflate@~0.8.2",
       "npm:minimatch@^10.2.5",
       "npm:octagonal-wheels@~0.1.45",
