@@ -2,3 +2,6 @@
 export default class ObsidianLiveSyncPlugin {}
 export class App {}
 export class Plugin {}
+export function getLanguage(): string {
+    return "en";
+}

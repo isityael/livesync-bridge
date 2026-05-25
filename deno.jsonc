@@ -21,6 +21,8 @@
         "@/common/": "./lib/src/common/",
         "@/main": "./stubs/obsidian.ts",
         "@/deps": "./stubs/obsidian.ts",
+        "@smithy/fetch-http-handler": "./stubs/smithy-fetch-http-handler.ts",
+        "obsidian": "./stubs/obsidian.ts",
         "svelte": "./stubs/svelte.ts",
         "fs/walk": "jsr:@std/fs@^1.0.23/",
         "@std/async": "jsr:@std/async@^1.2.0",
