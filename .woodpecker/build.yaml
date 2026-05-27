@@ -120,7 +120,7 @@ steps:
       - rm -f /tmp/cosign.key sbom.spdx.json
 
   - name: notation-sign
-    image: dhi.io/notation:1.3.2-alpine3.23-dev@sha256:4772befe2537ccd297edcf8c7750c4e0419b13cb0ecc23ed10903f56929bd85a
+    image: dhi.io/notation:1.3.2-alpine3.23-dev@sha256:e59cb58f377e6390c08f3f2437845536609bc6f7980bd942e6b2055ea3131f36
     environment:
       IMAGE_REF: harbor.m0sh1.cc/apps/livesync-bridge:${CI_COMMIT_SHA:0:8}
       NOTATION_KEY:
