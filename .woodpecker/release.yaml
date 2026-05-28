@@ -108,7 +108,7 @@ steps:
       - rm -rf /tmp/notation $HOME/.docker/config.json
 
   - name: github-release
-    image: woodpeckerci/plugin-release@sha256:4785edbb39734136122aef932faa9ee14a7939e394d05f2fc172a8731c3221c7
+    image: woodpeckerci/plugin-release@sha256:ad0965829b1f05c11c3680e352bbcd4418bb5acccbeb94c9fd78d05f5a978029
     settings:
       api_key:
         from_secret: github_token
