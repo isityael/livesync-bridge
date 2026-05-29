@@ -17,7 +17,7 @@ when:
 variables:
   - &image "harbor.m0sh1.cc/apps/livesync-bridge"
   - &image_tag "${CI_COMMIT_SHA:0:8}"
-  - &deno_image "dhi.io/deno:2.8.0-dev@sha256:e35a233f7f0eeabf5530adcb2a31acfe18a903f89de04bd41effcf8c11944400"
+  - &deno_image "dhi.io/deno:2.8.1-dev@sha256:219e5a844687f5aac899197b31e3364a70a6c70f6a56a3ec32cf679de580e1b0"
 
 steps:
   - name: deno-lint
