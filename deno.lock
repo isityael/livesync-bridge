@@ -15,9 +15,10 @@
     "npm:chokidar@5": "5.0.0",
     "npm:diff@9": "9.0.0",
     "npm:fflate@~0.8.2": "0.8.2",
+    "npm:hash-wasm@4.12.0": "4.12.0",
+    "npm:hash-wasm@^4.12.0": "4.12.0",
     "npm:minimatch@^10.2.5": "10.2.5",
-    "npm:octagonal-wheels@~0.1.45": "0.1.45",
-    "npm:xxhash-wasm@^1.1.0": "1.1.0"
+    "npm:octagonal-wheels@~0.1.45": "0.1.45"
   },
   "jsr": {
     "@std/async@1.2.0": {
@@ -215,6 +216,9 @@
     "fflate@0.8.2": {
       "integrity": "sha512-cPJU47OaAoCbg0pBvzsgpTPhmhqI5eJjh/JIu8tPj5q+T7iLvW/JAYUqmE7KOB4R1ZyEhzBaIQpQpardBF5z8A=="
     },
+    "hash-wasm@4.12.0": {
+      "integrity": "sha512-+/2B2rYLb48I/evdOIhP+K/DD2ca2fgBjp6O+GBEnCDk2e4rpeXIK8GvIyRPjTezgmWn9gmKwkQjjx6BtqDHVQ=="
+    },
     "idb@8.0.3": {
       "integrity": "sha512-LtwtVyVYO5BqRvcsKuB2iUMnHwPVByPCXFXOpuU96IZPPoPN6xjOGxZQ74pgSVVLQWtUOYgyeL4GE98BY5D3wg=="
     },
@@ -235,9 +239,6 @@
     },
     "undici-types@7.18.2": {
       "integrity": "sha512-AsuCzffGHJybSaRrmr5eHr81mwJU3kjw6M+uprWvCXiNeN9SOGwQ3Jn8jb8m3Z6izVgknn1R0FTCEAP2QrLY/w=="
-    },
-    "xxhash-wasm@1.1.0": {
-      "integrity": "sha512-147y/6YNh+tlp6nd/2pWq38i9h6mz/EuQ6njIrmW8D1BS5nCqs0P6DG+m6zTGnNz5I+uhZ0SHxBs9BsPrwcKDA=="
     }
   },
   "workspace": {
@@ -252,9 +253,9 @@
       "npm:chokidar@5",
       "npm:diff@9",
       "npm:fflate@~0.8.2",
+      "npm:hash-wasm@^4.12.0",
       "npm:minimatch@^10.2.5",
-      "npm:octagonal-wheels@~0.1.45",
-      "npm:xxhash-wasm@^1.1.0"
+      "npm:octagonal-wheels@~0.1.45"
     ]
   }
 }

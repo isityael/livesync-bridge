@@ -30,7 +30,7 @@
         "@types/pouchdb": "npm:@types/pouchdb@^6.4.2",
         "diff": "npm:diff@^9.0.0",
         "octagonal-wheels": "npm:octagonal-wheels@^0.1.45",
-        "xxhash-wasm-102": "npm:xxhash-wasm@^1.1.0",
+        "hash-wasm": "npm:hash-wasm@^4.12.0",
         "crypto": "node:crypto",
         "minimatch": "npm:minimatch@^10.2.5",
         "brace-expansion": "npm:brace-expansion@^5.0.5",
