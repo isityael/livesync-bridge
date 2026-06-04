@@ -17,7 +17,7 @@ when:
 variables:
   - &image "harbor.m0sh1.cc/apps/livesync-bridge"
   - &image_tag "${CI_COMMIT_SHA:0:8}"
-  - &deno_image "dhi.io/deno:2.8.1-dev@sha256:219e5a844687f5aac899197b31e3364a70a6c70f6a56a3ec32cf679de580e1b0"
+  - &deno_image "dhi.io/deno:2.8.2-dev@sha256:a6a202d2b8c0687b393f427a918ece7b5783a9b4da7ee313aee4bf4c827e3851"
 
 steps:
   - name: deno-lint
@@ -87,7 +87,7 @@ steps:
 
   - name: sbom-generate
     failure: ignore
-    image: dhi.io/syft:1.44.0-alpine3.23-dev@sha256:1384fcbb9daba2b46e190aa1a090129c63234a5bd3aabc0b97f514fe7abca678
+    image: dhi.io/syft:1.45.0-alpine3.23-dev@sha256:389f7907cb1e9cacab4837c238ca451a33ae24222a4ef942eaa728f2238e281b
     environment:
       IMAGE_REF: harbor.m0sh1.cc/apps/livesync-bridge:${CI_COMMIT_SHA:0:8}
       SYFT_REGISTRY_AUTH_AUTHORITY: harbor.m0sh1.cc
@@ -99,7 +99,7 @@ steps:
       - syft registry:$${IMAGE_REF} -o spdx-json > sbom.spdx.json
 
   - name: cosign-sign
-    image: dhi.io/cosign:3.0.6-alpine3.23-dev@sha256:4c941c34ff4d090498ab3396504af48ea11ee6d12c7dc81516371a04a3b19cfa
+    image: dhi.io/cosign:3.0.6-alpine3.23-dev@sha256:cdec3cd7d02105eac1b9a4dda9bafddb64a79f479da8d78886c1b56a9462a3a2
     environment:
       IMAGE_REF: harbor.m0sh1.cc/apps/livesync-bridge:${CI_COMMIT_SHA:0:8}
       COSIGN_EXPERIMENTAL: "1"
