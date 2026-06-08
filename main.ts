@@ -3,7 +3,7 @@ import { LOG_LEVEL_DEBUG } from "./lib/src/common/logger.ts";
 import { LOG_LEVEL_INFO } from "./lib/src/common/logger.ts";
 import { Hub } from "./Hub.ts";
 import { Config } from "./types.ts";
-import { parseArgs } from "jsr:@std/cli";
+import { parseArgs } from "jsr:@std/cli@^1.0.0";
 
 const KEY = "LSB_";
 const MALFORMED_LOCAL_STORAGE_MARKER = "database disk image is malformed";
