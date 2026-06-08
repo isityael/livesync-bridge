@@ -9,27 +9,7 @@
     "dockerfile",
     "github-actions",
     "woodpecker",
-    "custom.regex"
-  ],
-  "customManagers": [
-    {
-      "customType": "regex",
-      "description": "Deno import map npm: specifiers in deno.jsonc",
-      "managerFilePatterns": ["/deno\\.jsonc?$/"],
-      "matchStrings": [
-        "\"npm:(?<depName>(?:@[^/]+/)?[^@]+)@(?<currentValue>[^\"]+)\""
-      ],
-      "datasourceTemplate": "npm"
-    },
-    {
-      "customType": "regex",
-      "description": "Deno import map jsr: specifiers in deno.jsonc",
-      "managerFilePatterns": ["/deno\\.jsonc?$/"],
-      "matchStrings": [
-        "\"jsr:(?<depName>@[^@/]+/[^@/@]+)@(?<currentValue>[^\"/@]+)"
-      ],
-      "datasourceTemplate": "jsr"
-    }
+    "deno"
   ],
   "packageRules": [
     {
@@ -47,7 +27,7 @@
     },
     {
       "description": "Auto-merge Deno package patch and minor updates — low blast radius",
-      "matchManagers": ["custom.regex"],
+      "matchManagers": ["deno"],
       "matchUpdateTypes": ["patch", "minor"],
       "automerge": true
     }
