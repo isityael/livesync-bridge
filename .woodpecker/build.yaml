@@ -17,7 +17,7 @@ when:
 variables:
   - &image "harbor.m0sh1.cc/apps/livesync-bridge"
   - &image_tag "${CI_COMMIT_SHA:0:8}"
-  - &deno_image "dhi.io/deno:2.8.2-dev@sha256:5b377717ac37ee032d4ccc0ac90a0fc57579897477f88c4aced360008f05feb8"
+  - &deno_image "dhi.io/deno:2.8.2-dev@sha256:2bf4b09bd20ada9f10b9326eb4379b1e5eab05756f1c47652609c5bb81120487"
 
 steps:
   - name: deno-lint
@@ -74,7 +74,7 @@ steps:
 
   - name: trivy-scan
     failure: ignore
-    image: dhi.io/trivy:0.71.0-alpine3.23-dev@sha256:9c2cbe50ca483369406b10013f9da47664a5b471c5eb0928437c463e7c2ff2b0
+    image: dhi.io/trivy:0.71.0-alpine3.23-dev@sha256:081c285d76442d196ac8bd9bd415f838b0e7186944702884d236ad2322f23aab
     environment:
       IMAGE_REF: harbor.m0sh1.cc/apps/livesync-bridge:${CI_COMMIT_SHA:0:8}
       TRIVY_USERNAME:
@@ -99,7 +99,7 @@ steps:
       - syft registry:$${IMAGE_REF} -o spdx-json > sbom.spdx.json
 
   - name: cosign-sign
-    image: dhi.io/cosign:3.0.6-alpine3.23-dev@sha256:cdec3cd7d02105eac1b9a4dda9bafddb64a79f479da8d78886c1b56a9462a3a2
+    image: dhi.io/cosign:3.0.6-alpine3.23-dev@sha256:1f114e202db2f37e8ef2a9b0dfc845a46a06dce5a1594d73271a80a298f6c647
     environment:
       IMAGE_REF: harbor.m0sh1.cc/apps/livesync-bridge:${CI_COMMIT_SHA:0:8}
       COSIGN_EXPERIMENTAL: "1"
