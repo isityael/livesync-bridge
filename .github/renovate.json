@@ -21,7 +21,7 @@
       "groupName": "github actions"
     },
     {
-      "description": "Auto-merge npm package patch and minor updates — low blast radius",
+      "description": "Auto-merge Node package patch and minor updates — low blast radius",
       "matchManagers": ["npm"],
       "matchUpdateTypes": ["patch", "minor"],
       "automerge": true
