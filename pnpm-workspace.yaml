@@ -2,3 +2,15 @@ allowBuilds:
   '@firebase/util': true
   esbuild: true
   protobufjs: true
+
+peerDependencyRules:
+  allowedVersions:
+    '@typescript-eslint/eslint-plugin>typescript': 7.0.1-rc
+    '@typescript-eslint/parser>typescript': 7.0.1-rc
+    '@typescript-eslint/project-service>typescript': 7.0.1-rc
+    '@typescript-eslint/tsconfig-utils>typescript': 7.0.1-rc
+    '@typescript-eslint/type-utils>typescript': 7.0.1-rc
+    '@typescript-eslint/typescript-estree>typescript': 7.0.1-rc
+    '@typescript-eslint/utils>typescript': 7.0.1-rc
+    'typescript-eslint>typescript': 7.0.1-rc
+    'ts-api-utils>typescript': 7.0.1-rc
