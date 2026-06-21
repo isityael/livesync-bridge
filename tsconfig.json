@@ -1,7 +1,6 @@
 {
   "compilerOptions": {
     "allowImportingTsExtensions": true,
-    "baseUrl": ".",
     "ignoreDeprecations": "6.0",
     "lib": ["ES2024", "DOM", "DOM.Iterable"],
     "module": "ESNext",

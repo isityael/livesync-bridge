@@ -11,8 +11,8 @@
   "scripts": {
     "build": "node scripts/build.mjs",
     "clean": "rm -rf dist coverage",
-    "fmt:check": "prettier --check .github/renovate.json .github/workflows/publish-ghcr.yaml .woodpecker/build.yaml .woodpecker/release.yaml package.json tsconfig.json eslint.config.js vitest.config.ts scripts/build.mjs runtime/node_compat.ts stubs/*.ts test/*.ts main.ts Peer.ts PeerStorage.ts readme.md",
-    "lint": "eslint *.ts stubs/*.ts runtime/*.ts test/*.ts vitest.config.ts",
+    "fmt:check": "prettier --check .github/renovate.json .github/workflows/publish-ghcr.yaml .woodpecker/build.yaml .woodpecker/release.yaml package.json tsconfig.json eslint.config.js vitest.config.ts scripts/build.mjs runtime/*.mjs runtime/node_compat.ts stubs/*.ts test/*.ts main.ts Peer.ts PeerStorage.ts readme.md",
+    "lint": "node --import ./runtime/typescript-eslint-compat.mjs ./node_modules/eslint/bin/eslint.js *.ts stubs/*.ts runtime/*.ts test/*.ts vitest.config.ts",
     "start": "node dist/main.js",
     "test": "pnpm run build && vitest run",
     "typecheck": "tsc --noEmit"
@@ -45,19 +45,20 @@
     "pouchdb-utils": "^9.0.0",
     "qrcode-generator": "^2.0.4",
     "transform-pouch": "^2.0.0",
-    "trystero": "^0.21.8"
+    "trystero": "^0.25.2"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.4",
+    "@eslint/js": "^10.0.1",
     "@types/markdown-it": "^14.1.2",
     "@types/node": "^26.0.0",
     "@types/pouchdb": "^6.4.2",
-    "esbuild": "^0.27.7",
-    "eslint": "^9.39.4",
-    "globals": "^16.5.0",
-    "prettier": "^3.8.4",
-    "typescript": "^6.0.3",
-    "typescript-eslint": "^8.61.1",
-    "vitest": "^4.1.9"
+    "esbuild": "^0.28.1",
+    "eslint": "^10.5.0",
+    "globals": "^17.6.0",
+    "prettier": "4.0.0-alpha.13",
+    "typescript": "7.0.1-rc",
+    "typescript-eslint": "8.61.2-alpha.3",
+    "typescript-eslint-compiler": "npm:typescript@6.0.3",
+    "vitest": "5.0.0-beta.5"
   }
 }

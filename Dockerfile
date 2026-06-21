@@ -8,7 +8,7 @@ WORKDIR /app
 ENV NODE_ENV=development
 
 # Copy manifests first for better layer reuse.
-COPY package.json pnpm-lock.yaml tsconfig.json ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.json ./
 RUN corepack enable \
   && pnpm install --frozen-lockfile --ignore-scripts
 
