@@ -1,7 +1,7 @@
-// Server-side stub for Obsidian API — bridge runs in Deno, not Obsidian
+// Server-side stub for Obsidian API. The bridge runs headless, not inside Obsidian.
 export default class ObsidianLiveSyncPlugin {}
 export class App {}
 export class Plugin {}
 export function getLanguage(): string {
-    return "en";
+  return "en";
 }

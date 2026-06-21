@@ -1,4 +1,4 @@
-# LiveSync Bridge — Deno-based CouchDB sync bridge for Basic Memory
+# LiveSync Bridge — Node-based CouchDB sync bridge for Basic Memory
 # Pushes to: harbor.m0sh1.cc/apps/livesync-bridge
 #
 # This pipeline runs in the standalone livesync-bridge repo (sm-moshi/livesync-bridge).
@@ -17,26 +17,37 @@ when:
 variables:
   - &image "harbor.m0sh1.cc/apps/livesync-bridge"
   - &image_tag "${CI_COMMIT_SHA:0:8}"
-  - &deno_image "dhi.io/deno:2.8.3-dev@sha256:99458ee8ff8f80346d088afb00243b8b5f32f684d62711fd9e0f746685db9760"
+  - &node_image "dhi.io/node:26.3.0-debian13-dev@sha256:c728b507f13a8fc9510cc1ae64359b2d047584f7bf1c643e2d2a524881becd88"
 
 steps:
-  - name: deno-lint
-    image: *deno_image
+  - name: npm-ci
+    image: *node_image
     commands:
-      - deno lint
+      - npm ci --ignore-scripts --no-audit --no-fund
 
-  - name: deno-fmt
-    image: *deno_image
+  - name: fmt-check
+    image: *node_image
     commands:
-      - deno fmt --check
+      - npm ci --ignore-scripts --no-audit --no-fund
+      - npm run fmt:check
 
-  - name: deno-check
-    image: *deno_image
-    failure: ignore
+  - name: lint
+    image: *node_image
     commands:
-      - deno install --allow-import
-      # Advisory — upstream lib/ has ArrayBuffer compat errors with Deno 2.x.
-      - deno check --allow-import main.ts
+      - npm ci --ignore-scripts --no-audit --no-fund
+      - npm run lint
+
+  - name: typecheck
+    image: *node_image
+    commands:
+      - npm ci --ignore-scripts --no-audit --no-fund
+      - npm run typecheck
+
+  - name: test
+    image: *node_image
+    commands:
+      - npm ci --ignore-scripts --no-audit --no-fund
+      - npm test
 
   - name: build-and-push
     image: woodpeckerci/plugin-docker-buildx@sha256:44d6160eb56924037aa02c45cf1a677401811d3b6e75e63f6bfec0ddd54bb82a
@@ -64,10 +75,10 @@ steps:
       build_args:
         - "COMMIT_SHA=${CI_COMMIT_SHA}"
       cache_from: 'type=registry\,ref=harbor.m0sh1.cc/cache/livesync-bridge:buildcache'
-      cache_to: 'type=registry,ref=harbor.m0sh1.cc/cache/livesync-bridge:buildcache,mode=max,ignore-error=true'
+      cache_to: "type=registry,ref=harbor.m0sh1.cc/cache/livesync-bridge:buildcache,mode=max,ignore-error=true"
 
   - name: wait-for-replication
-    image: *deno_image
+    image: *node_image
     commands:
       - echo "Waiting 10s for Garage replication..."
       - sleep 10

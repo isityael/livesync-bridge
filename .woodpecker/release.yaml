@@ -35,7 +35,7 @@ steps:
       build_args:
         - "COMMIT_SHA=${CI_COMMIT_SHA}"
       cache_from: 'type=registry\,ref=harbor.m0sh1.cc/cache/livesync-bridge:buildcache'
-      cache_to: 'type=registry,ref=harbor.m0sh1.cc/cache/livesync-bridge:buildcache,mode=max,ignore-error=true'
+      cache_to: "type=registry,ref=harbor.m0sh1.cc/cache/livesync-bridge:buildcache,mode=max,ignore-error=true"
 
   - name: trivy-scan
     failure: ignore
