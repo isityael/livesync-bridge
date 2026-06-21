@@ -18,18 +18,18 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.964.0",
-    "@smithy/md5-js": "^4.2.7",
-    "@smithy/middleware-apply-body-checksum": "^4.2.7",
-    "@smithy/types": "^4.9.0",
-    "@smithy/util-retry": "^4.2.7",
+    "@aws-sdk/client-s3": "^3.1073.0",
+    "@smithy/md5-js": "^4.4.1",
+    "@smithy/middleware-apply-body-checksum": "^4.5.1",
+    "@smithy/types": "^4.15.0",
+    "@smithy/util-retry": "^4.5.1",
     "@trystero-p2p/nostr": "^0.25.2",
     "brace-expansion": "^5.0.6",
     "chokidar": "^5.0.0",
     "diff": "^9.0.0",
     "fflate": "^0.8.3",
     "hash-wasm": "^4.12.0",
-    "markdown-it": "^14.1.0",
+    "markdown-it": "^14.2.0",
     "minimatch": "^10.2.5",
     "octagonal-wheels": "^0.1.46",
     "pouchdb-adapter-http": "^9.0.0",
@@ -45,19 +45,19 @@
     "pouchdb-utils": "^9.0.0",
     "qrcode-generator": "^2.0.4",
     "transform-pouch": "^2.0.0",
-    "trystero": "^0.21.0"
+    "trystero": "^0.21.8"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.2",
+    "@eslint/js": "^9.39.4",
     "@types/markdown-it": "^14.1.2",
     "@types/node": "^26.0.0",
     "@types/pouchdb": "^6.4.2",
-    "esbuild": "^0.27.2",
-    "eslint": "^9.39.2",
+    "esbuild": "^0.27.7",
+    "eslint": "^9.39.4",
     "globals": "^16.5.0",
-    "prettier": "^3.8.0",
+    "prettier": "^3.8.4",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.50.0",
-    "vitest": "^4.0.16"
+    "typescript-eslint": "^8.61.1",
+    "vitest": "^4.1.9"
   }
 }
