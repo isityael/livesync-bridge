@@ -23,7 +23,7 @@ Of course, it is multi-directional!
 
 ## Prerequisites
 
-- [Deno](https://deno.com/) is required.
+- [Node.js 26](https://nodejs.org/) and npm 11 are required.
 
 ## Simply run
 
@@ -39,8 +39,9 @@ git clone --recursive https://github.com/vrtmrz/livesync-bridge
 3. Simply run like this.
 
 ```bash
-$ deno install
-$ deno task run
+$ npm ci
+$ npm run build
+$ npm start
 ```
 
 Note: If you want to scan all storage and databases from the beginning, please run with `--reset`.
@@ -57,10 +58,10 @@ git clone https://github.com/vrtmrz/livesync-bridge
    dat/config.json. (The storage folder has to start with "data/" to be in the volume)
 
 3. Simply run like this.
+
 ```bash
 docker compose up -d
 ```
-
 
 # Configuration
 
@@ -82,7 +83,7 @@ The configuration file consists of the following structure.
       "passphrase": "passphrase", // E2EE passphrase, if you do not enabled, leave it blank.
       "obfuscatePassphrase": "passphrase", // Path obfuscation passphrase, if you do not enabled, leave it blank. if enabled, set the same value of passphrase.
       "baseDir": "blog/", // Sharing folder
-      "useRemoteTweaks":true // Overwrite customChunkSize or minimumChunkSize, and check configuration matches
+      "useRemoteTweaks": true, // Overwrite customChunkSize or minimumChunkSize, and check configuration matches
     },
     {
       "type": "couchdb",
@@ -103,16 +104,17 @@ The configuration file consists of the following structure.
       "name": "storage-test1",
       "group": "main", // we can omit this.
       "baseDir": "./vault/", // The folder which have been synchronised.
-      "processor": { // The processor configuration. You can omit this.
-        "cmd": "script/test.sh",  // The programme which run at file modification or deletion.
-        "args": [ "$filename", "$mode" ] 
-        // The modified file is set to $filename. The mode is set to `deleted` or `modified`. 
+      "processor": {
+        // The processor configuration. You can omit this.
+        "cmd": "script/test.sh", // The programme which run at file modification or deletion.
+        "args": ["$filename", "$mode"],
+        // The modified file is set to $filename. The mode is set to `deleted` or `modified`.
         // $filename and $mode have been set also in environment variables.
       },
       "scanOfflineChanges": true,
-      "useChokidar":false, // We are using `Deno.watch` now, if you have trouble in Linux, please enable this.
-    }
-  ]
+      "useChokidar": true, // Node runtime uses chokidar for filesystem watching.
+    },
+  ],
 }
 ```
 
@@ -160,7 +162,7 @@ Totally, all files are synchronized like this:
 
 ... with the configuration below:
 
-````jsonc
+```jsonc
 {
   "peers": [
     {
@@ -174,7 +176,7 @@ Totally, all files are synchronized like this:
       "obfuscatePassphrase": "glucose", // Path obfuscation passphrase, if you do not enabled, leave it blank. if enabled, set the same value of passphrase.
       "customChunkSize": 100,
       "minimumChunkSize": 20,
-      "baseDir": "shared/" // Sharing folder
+      "baseDir": "shared/", // Sharing folder
     },
     {
       "type": "couchdb", // Type should be `couchdb or storage`
@@ -187,7 +189,7 @@ Totally, all files are synchronized like this:
       "obfuscatePassphrase": "cocoa", // Path obfuscation passphrase, if you do not enabled, leave it blank. if enabled, set the same value of passphrase.
       "customChunkSize": 100,
       "minimumChunkSize": 20,
-      "baseDir": "" // Sharing folder
+      "baseDir": "", // Sharing folder
     },
     {
       "type": "couchdb",
@@ -200,13 +202,13 @@ Totally, all files are synchronized like this:
       "obfuscatePassphrase": "smock",
       "customChunkSize": 100,
       "minimumChunkSize": 20,
-      "baseDir": "kyouyuu/"
+      "baseDir": "kyouyuu/",
     },
     {
       "type": "storage",
       "name": "storage-test1",
-      "baseDir": "./vault/" // The folder which have been synchronised.
-    }
-  ]
+      "baseDir": "./vault/", // The folder which have been synchronised.
+    },
+  ],
 }
-````
+```

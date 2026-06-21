@@ -9,7 +9,7 @@ on:
 permissions:
   contents: read
   packages: write
-  id-token: write   # for cosign keyless signing
+  id-token: write # for cosign keyless signing
 
 concurrency:
   group: publish-ghcr-${{ github.ref }}
@@ -51,7 +51,7 @@ jobs:
             type=raw,value=latest,enable={{is_default_branch}}
           labels: |
             org.opencontainers.image.title=livesync-bridge
-            org.opencontainers.image.description=Deno-based CouchDB to filesystem bridge for Obsidian Self-hosted LiveSync
+            org.opencontainers.image.description=Node-based CouchDB to filesystem bridge for Obsidian Self-hosted LiveSync
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
             org.opencontainers.image.licenses=MIT
 

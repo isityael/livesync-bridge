@@ -1,0 +1,41 @@
+{
+  "compilerOptions": {
+    "allowImportingTsExtensions": true,
+    "baseUrl": ".",
+    "ignoreDeprecations": "6.0",
+    "lib": ["ES2024", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "noEmit": true,
+    "paths": {
+      "@/*": ["./*"],
+      "@/common/KeyValueDB": ["./stubs/KeyValueDB.ts"],
+      "@/common/events": ["./stubs/events.ts"],
+      "@/common/*": ["./lib/src/common/*"],
+      "@/deps": ["./stubs/obsidian.ts"],
+      "@/lib/src/*": ["./lib/src/*"],
+      "@/main": ["./stubs/obsidian.ts"],
+      "@lib/*": ["./lib/src/*"],
+      "@lib/pouchdb/pouchdb-browser.ts": ["./lib/src/pouchdb/pouchdb-http.ts"],
+      "@lib/worker/bgWorker": ["./lib/src/worker/bgWorker.mock.ts"],
+      "@lib/worker/bgWorker.ts": ["./lib/src/worker/bgWorker.mock.ts"],
+      "@smithy/fetch-http-handler": ["./stubs/smithy-fetch-http-handler.ts"],
+      "obsidian": ["./stubs/obsidian.ts"],
+      "svelte": ["./stubs/svelte.ts"]
+    },
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "strict": false,
+    "target": "ES2024",
+    "types": ["node", "pouchdb", "vitest/globals"]
+  },
+  "include": [
+    "*.ts",
+    "runtime/**/*.ts",
+    "stubs/**/*.ts",
+    "test/**/*.ts",
+    "types/**/*.d.ts",
+    "vitest.config.ts"
+  ],
+  "exclude": ["dist", "node_modules"]
+}

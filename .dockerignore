@@ -9,6 +9,8 @@ vault*/*
 .idea
 .DS_Store
 node_modules
+dist
+coverage
 BUILD.md
 readme.md
 docker-compose.yml

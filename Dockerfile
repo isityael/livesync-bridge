@@ -1,49 +1,46 @@
-# Stage 1: Cache modules and transpilation artifacts
+# Stage 1: install dependencies and bundle the bridge.
 #
 # Policy: prefer glibc-based images for networked apps (Service DNS, CouchDB client).
-FROM dhi.io/deno:2.8.3-dev@sha256:99458ee8ff8f80346d088afb00243b8b5f32f684d62711fd9e0f746685db9760 AS builder
+ARG NODE_IMAGE=dhi.io/node:26.3.0-debian13-dev@sha256:c728b507f13a8fc9510cc1ae64359b2d047584f7bf1c643e2d2a524881becd88
+
+FROM ${NODE_IMAGE} AS builder
 
 WORKDIR /app
-ENV DENO_DIR=/deno-dir \
-  DENO_NO_UPDATE_CHECK=1 \
-  DENO_NO_PROMPT=1
+ENV NODE_ENV=development \
+  npm_config_audit=false \
+  npm_config_fund=false
 
 # Copy manifests first for better layer reuse.
-COPY deno.jsonc ./
+COPY package.json package-lock.json tsconfig.json ./
+RUN npm ci --ignore-scripts --no-audit --no-fund
 
 # Copy runtime sources (submodule `lib/` is required for import resolution).
-COPY main.ts Hub.ts Peer.ts PeerCouchDB.ts PeerStorage.ts types.ts util.ts ./
+COPY scripts ./scripts
+COPY runtime ./runtime
 COPY stubs ./stubs
+COPY types ./types
 COPY lib ./lib
+COPY main.ts Hub.ts Peer.ts PeerCouchDB.ts PeerStorage.ts types.ts util.ts ./
 
-# Patch bare JSON imports in the lib submodule to add the import attribute
-# required by Deno 2.x (upstream uses Obsidian's bundler which handles this).
-RUN find lib/src/common/messages/ -name '*.ts' \
-  -exec sed -i 's/from "\(.*\.json\)";/from "\1" with { type: "json" };/g' {} +
-
-# Install npm deps and cache all modules.
-RUN deno install --allow-import \
-  && deno cache --allow-import main.ts \
+RUN npm run build \
   && mkdir -p /app/data /app/dat
 
-# Stage 2: Runtime
-FROM dhi.io/deno:2.8.3@sha256:55942eb5160a9165054daa533ac6c2ee0e3be87afe2b9daa81d29d5cc9ea1fc8
+# Stage 2: runtime
+FROM ${NODE_IMAGE}
 
 WORKDIR /app
-ENV DENO_DIR=/deno-dir \
-  DENO_NO_UPDATE_CHECK=1 \
-  DENO_NO_PROMPT=1
+ENV LSB_STATE_DIR=/app/dat \
+  NODE_ENV=production
 
-COPY --from=builder --chown=1000:1000 /deno-dir /deno-dir
-COPY --from=builder --chown=1000:1000 /app/node_modules /app/node_modules
-COPY --from=builder --chown=1000:1000 /app/deno.jsonc /app/
-COPY --from=builder --chown=1000:1000 /app/main.ts /app/Hub.ts /app/Peer.ts /app/PeerCouchDB.ts /app/PeerStorage.ts /app/types.ts /app/util.ts /app/
-COPY --from=builder --chown=1000:1000 /app/stubs /app/stubs
-COPY --from=builder --chown=1000:1000 /app/lib /app/lib
+COPY --from=builder --chown=node:node /app/dist /app/dist
+COPY --from=builder --chown=node:node /app/package.json /app/package-lock.json /app/
+
+RUN mkdir -p /app/data /app/dat \
+  && chown -R node:node /app
 
 VOLUME /app/dat
 VOLUME /app/data
 
-USER 1000:1000
+USER node
 
-CMD ["deno", "run", "--cached-only", "--no-lock", "-A", "main.ts"]
+CMD ["node", "dist/main.js"]
