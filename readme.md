@@ -23,7 +23,7 @@ Of course, it is multi-directional!
 
 ## Prerequisites
 
-- [Node.js 26](https://nodejs.org/) and npm 11 are required.
+- [Node.js 26](https://nodejs.org/) and PNPM 11 via Corepack are required.
 
 ## Simply run
 
@@ -39,9 +39,10 @@ git clone --recursive https://github.com/vrtmrz/livesync-bridge
 3. Simply run like this.
 
 ```bash
-$ npm ci
-$ npm run build
-$ npm start
+$ corepack enable
+$ pnpm install --frozen-lockfile
+$ pnpm run build
+$ pnpm start
 ```
 
 Note: If you want to scan all storage and databases from the beginning, please run with `--reset`.

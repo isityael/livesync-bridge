@@ -8,7 +8,7 @@ describe("dependency hygiene", () => {
       "utf8",
     );
     const lockText = await readFile(
-      new URL("../package-lock.json", import.meta.url),
+      new URL("../pnpm-lock.yaml", import.meta.url),
       "utf8",
     ).catch(() => "");
 

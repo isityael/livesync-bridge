@@ -3,9 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
+  "packageManager": "pnpm@11.8.0",
   "engines": {
     "node": ">=26 <27",
-    "npm": ">=11"
+    "pnpm": ">=11 <12"
   },
   "scripts": {
     "build": "node scripts/build.mjs",
@@ -13,7 +14,7 @@
     "fmt:check": "prettier --check .github/renovate.json .github/workflows/publish-ghcr.yaml .woodpecker/build.yaml .woodpecker/release.yaml package.json tsconfig.json eslint.config.js vitest.config.ts scripts/build.mjs runtime/node_compat.ts stubs/*.ts test/*.ts main.ts Peer.ts PeerStorage.ts readme.md",
     "lint": "eslint *.ts stubs/*.ts runtime/*.ts test/*.ts vitest.config.ts",
     "start": "node dist/main.js",
-    "test": "npm run build && vitest run",
+    "test": "pnpm run build && vitest run",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
