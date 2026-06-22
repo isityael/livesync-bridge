@@ -17,7 +17,7 @@ when:
 variables:
   - &image "harbor.m0sh1.cc/apps/livesync-bridge"
   - &image_tag "${CI_COMMIT_SHA:0:8}"
-  - &node_image "dhi.io/node:26.3.1-alpine3.24-dev@sha256:df3d2356c5c3f5dd3f488f0e2402b355fc80ce75dab8a1de37267a43ddd71117"
+  - &node_image "dhi.io/node:26.3.1-alpine3.24-dev@sha256:84d3115516eaeb393c047443eb7a82a635693df3692279b1dcf50d338d8f10ea"
   - &pnpm_install "corepack enable && pnpm install --frozen-lockfile --ignore-scripts"
 
 steps:
