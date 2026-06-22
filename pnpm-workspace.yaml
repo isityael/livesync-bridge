@@ -3,6 +3,19 @@ allowBuilds:
   esbuild: true
   protobufjs: true
 
+minimumReleaseAgeExclude:
+  - '@typescript-eslint/eslint-plugin@8.61.2-alpha.5'
+  - '@typescript-eslint/parser@8.61.2-alpha.5'
+  - '@typescript-eslint/project-service@8.61.2-alpha.5'
+  - '@typescript-eslint/scope-manager@8.61.2-alpha.5'
+  - '@typescript-eslint/tsconfig-utils@8.61.2-alpha.5'
+  - '@typescript-eslint/type-utils@8.61.2-alpha.5'
+  - '@typescript-eslint/types@8.61.2-alpha.5'
+  - '@typescript-eslint/typescript-estree@8.61.2-alpha.5'
+  - '@typescript-eslint/utils@8.61.2-alpha.5'
+  - '@typescript-eslint/visitor-keys@8.61.2-alpha.5'
+  - 'typescript-eslint@8.61.2-alpha.5'
+
 peerDependencyRules:
   allowedVersions:
     '@typescript-eslint/eslint-plugin>typescript': 7.0.1-rc
