@@ -10,7 +10,7 @@ variables:
 
 steps:
   - name: build-and-push
-    image: woodpeckerci/plugin-docker-buildx@sha256:0aafc8a8c581115e6f9315705aa90fb1973da2450b45fa50bb56f0cade4c0e18
+    image: woodpeckerci/plugin-docker-buildx@sha256:67e0a56b3edfdd4aa5cc24402e2a75149e7b66825fdc57e90546ed84b7e31b2b
     privileged: true
     settings:
       registry: harbor.m0sh1.cc
