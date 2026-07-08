@@ -17,7 +17,7 @@ when:
 variables:
   - &image "harbor.m0sh1.cc/apps/livesync-bridge"
   - &image_tag "${CI_COMMIT_SHA:0:8}"
-  - &node_image "dhi.io/node:26.4.0-alpine3.24-dev@sha256:1c3f16604700ad8ea27c20299e66e0c1359583f9662301c4d3a660228255b7d8"
+  - &node_image "dhi.io/node:26.4.0-alpine3.24-dev@sha256:6049c9bf9906b19c05596189887b19905471a0a88d555fc76db55ff23ee79a5a"
   - &pnpm_install "corepack enable && pnpm install --frozen-lockfile --ignore-scripts"
 
 steps:
@@ -86,7 +86,7 @@ steps:
 
   - name: trivy-scan
     failure: ignore
-    image: dhi.io/trivy:0.71.2-alpine3.23-dev@sha256:2f89488f50862e64639a8cbefd4896a9079e24659093dd470f08ff1f113f6a62
+    image: dhi.io/trivy:0.71.2-alpine3.23-dev@sha256:2423d1a2eb3b0a4281efcd24e390a40acd6072509cbe917d95b7d0b1d12a47ff
     environment:
       IMAGE_REF: harbor.m0sh1.cc/apps/livesync-bridge:${CI_COMMIT_SHA:0:8}
       TRIVY_USERNAME:
