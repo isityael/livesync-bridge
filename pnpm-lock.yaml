@@ -130,8 +130,8 @@ importers:
         specifier: npm:typescript@6.0.3
         version: typescript@6.0.3
       vitest:
-        specifier: 5.0.0-beta.5
-        version: 5.0.0-beta.5(@types/node@26.1.0)(vite@8.1.3(@types/node@26.1.0)(esbuild@0.28.1))
+        specifier: 5.0.0-beta.6
+        version: 5.0.0-beta.6(@types/node@26.1.0)(vite@8.1.3(@types/node@26.1.0)(esbuild@0.28.1))
 
 packages:
 
@@ -859,8 +859,8 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@vitest/mocker@5.0.0-beta.5':
-    resolution: {integrity: sha512-NZCB4PeGl+YqWBxk4lAsH1oS8EvBG3b/hDaOCgEmsoZSda5q9jUxU8P46HyczFp34tcnxp92KVlNDiKcDAE59w==}
+  '@vitest/mocker@5.0.0-beta.6':
+    resolution: {integrity: sha512-SzwsM2w4KKzYivLYoiV75NE4vxq350NDximg+LxtMpcprWVrSoUzSiPBJXXzMwXG0xUcnyIODaajDOHOszvn9A==}
     peerDependencies:
       msw: ^2.4.9
       vite: ^6.0.0 || ^7.0.0 || ^8.0.0
@@ -870,14 +870,14 @@ packages:
       vite:
         optional: true
 
-  '@vitest/pretty-format@5.0.0-beta.5':
-    resolution: {integrity: sha512-eFj80bS7sN1aOOV7Ibi/sDYhhzs1fj2S8+/Y2mjOw2POpSW/6Esjj7FIdj0cD2/cdsKFumEokh+ijVijisd9+w==}
+  '@vitest/pretty-format@5.0.0-beta.6':
+    resolution: {integrity: sha512-PfSfivoemQgOHhzm8S/Ka1yR31v5XanTzZHyagI7ZkC4AVktUilpj4BnD6OLZgKLhj8O8cift8uX8PgsbLVqKw==}
 
-  '@vitest/spy@5.0.0-beta.5':
-    resolution: {integrity: sha512-AF4gJhHwopexCGrdUnt8Y3+3eVvgMie4tHmlIJi2i3DH6TQlPN2V2/wJfrQAC5ZAgqSM278qmkJCYGC4aOfwSg==}
+  '@vitest/spy@5.0.0-beta.6':
+    resolution: {integrity: sha512-b/hsozjwYB+DPhnPv0xlAfSNB1NRpSIodPX3T1H9y5noshQBpU3hANH4tNhmSkhXYwHjOcG2fcYJ4hgbWQUIUw==}
 
-  '@vitest/utils@5.0.0-beta.5':
-    resolution: {integrity: sha512-M+DZy1Q7v6//AbTYjVy86ChuF4tgSdGySVpH49kSkES16IRL5QRSmtAPdZVQ19S6Eke+NzAqWn1PUZNKljftfg==}
+  '@vitest/utils@5.0.0-beta.6':
+    resolution: {integrity: sha512-1uuttAAX54VPxx/NeNTm8iFCvoN1O6+lPFPlxS06CjdoNRlDNPC3T4CMPQPAFugzeQC6sRuHhO0YfPY3OaKdfA==}
 
   abstract-leveldown@2.7.2:
     resolution: {integrity: sha512-+OVvxH2rHVEhWLdbudP6p0+dNMXu8JA1CbhP19T8paTYAcX7oJ4OVjT+ZUVpv7mITxXHqDMej+GdqXBmXkw09w==}
@@ -1645,20 +1645,20 @@ packages:
       yaml:
         optional: true
 
-  vitest@5.0.0-beta.5:
-    resolution: {integrity: sha512-Gi7moR+KBro+LGC1jLGalpv4Ujb83dBLOH9o1f9VnWrvl0tRp4p1njh3Gikcexic0xe4foueQvgImq/hKET+bw==}
+  vitest@5.0.0-beta.6:
+    resolution: {integrity: sha512-dY7HW8Zr+FSxWt2HP9euVmvUQ1qG0+xOH+SSChVcXXc5egALS7qUlbKax/6HR92I24b8m3da16A163Zz89s/Jw==}
     engines: {node: ^22.12.0 || ^24.0.0 || >=26.0.0}
     hasBin: true
     peerDependencies:
       '@edge-runtime/vm': '*'
       '@opentelemetry/api': ^1.9.0
       '@types/node': ^22.0.0 || >=24.0.0
-      '@vitest/browser-playwright': 5.0.0-beta.5
-      '@vitest/browser-preview': 5.0.0-beta.5
-      '@vitest/browser-webdriverio': 5.0.0-beta.5
-      '@vitest/coverage-istanbul': 5.0.0-beta.5
-      '@vitest/coverage-v8': 5.0.0-beta.5
-      '@vitest/ui': 5.0.0-beta.5
+      '@vitest/browser-playwright': 5.0.0-beta.6
+      '@vitest/browser-preview': 5.0.0-beta.6
+      '@vitest/browser-webdriverio': ^5.0.0-beta.5 || >=5.0.0
+      '@vitest/coverage-istanbul': 5.0.0-beta.6
+      '@vitest/coverage-v8': 5.0.0-beta.6
+      '@vitest/ui': 5.0.0-beta.6
       happy-dom: '*'
       jsdom: '*'
       vite: ^6.4.0 || ^7.0.0 || ^8.0.0
@@ -2438,24 +2438,24 @@ snapshots:
   '@typescript/typescript-win32-x64@7.0.1-rc':
     optional: true
 
-  '@vitest/mocker@5.0.0-beta.5(vite@8.1.3(@types/node@26.1.0)(esbuild@0.28.1))':
+  '@vitest/mocker@5.0.0-beta.6(vite@8.1.3(@types/node@26.1.0)(esbuild@0.28.1))':
     dependencies:
       '@jridgewell/trace-mapping': 0.3.31
-      '@vitest/spy': 5.0.0-beta.5
+      '@vitest/spy': 5.0.0-beta.6
       estree-walker: 3.0.3
       magic-string: 0.30.21
     optionalDependencies:
       vite: 8.1.3(@types/node@26.1.0)(esbuild@0.28.1)
 
-  '@vitest/pretty-format@5.0.0-beta.5':
+  '@vitest/pretty-format@5.0.0-beta.6':
     dependencies:
       tinyrainbow: 3.1.0
 
-  '@vitest/spy@5.0.0-beta.5': {}
+  '@vitest/spy@5.0.0-beta.6': {}
 
-  '@vitest/utils@5.0.0-beta.5':
+  '@vitest/utils@5.0.0-beta.6':
     dependencies:
-      '@vitest/pretty-format': 5.0.0-beta.5
+      '@vitest/pretty-format': 5.0.0-beta.6
       convert-source-map: 2.0.0
       tinyrainbow: 3.1.0
 
@@ -3266,13 +3266,13 @@ snapshots:
       esbuild: 0.28.1
       fsevents: 2.3.3
 
-  vitest@5.0.0-beta.5(@types/node@26.1.0)(vite@8.1.3(@types/node@26.1.0)(esbuild@0.28.1)):
+  vitest@5.0.0-beta.6(@types/node@26.1.0)(vite@8.1.3(@types/node@26.1.0)(esbuild@0.28.1)):
     dependencies:
       '@types/chai': 5.2.3
-      '@vitest/mocker': 5.0.0-beta.5(vite@8.1.3(@types/node@26.1.0)(esbuild@0.28.1))
-      '@vitest/pretty-format': 5.0.0-beta.5
-      '@vitest/spy': 5.0.0-beta.5
-      '@vitest/utils': 5.0.0-beta.5
+      '@vitest/mocker': 5.0.0-beta.6(vite@8.1.3(@types/node@26.1.0)(esbuild@0.28.1))
+      '@vitest/pretty-format': 5.0.0-beta.6
+      '@vitest/spy': 5.0.0-beta.6
+      '@vitest/utils': 5.0.0-beta.6
       chai: 6.2.2
       es-module-lexer: 2.3.0
       expect-type: 1.4.0

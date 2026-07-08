@@ -60,6 +60,6 @@
     "typescript": "7.0.1-rc",
     "typescript-eslint": "8.63.0",
     "typescript-eslint-compiler": "npm:typescript@6.0.3",
-    "vitest": "5.0.0-beta.5"
+    "vitest": "5.0.0-beta.6"
   }
 }
