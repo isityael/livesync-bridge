@@ -39,7 +39,7 @@ steps:
 
   - name: trivy-scan
     failure: ignore
-    image: dhi.io/trivy:0.71.2-alpine3.23-dev@sha256:2f89488f50862e64639a8cbefd4896a9079e24659093dd470f08ff1f113f6a62
+    image: dhi.io/trivy:0.71.2-alpine3.23-dev@sha256:2423d1a2eb3b0a4281efcd24e390a40acd6072509cbe917d95b7d0b1d12a47ff
     environment:
       IMAGE_REF: "harbor.m0sh1.cc/apps/livesync-bridge:${CI_COMMIT_TAG##v}"
       TRIVY_USERNAME:
