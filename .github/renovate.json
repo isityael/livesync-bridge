@@ -8,6 +8,11 @@
   "enabledManagers": ["dockerfile", "github-actions", "woodpecker", "npm"],
   "packageRules": [
     {
+      "description": "Keep the ESLint compatibility compiler on TypeScript 6",
+      "matchDepNames": ["typescript-eslint-compiler"],
+      "enabled": false
+    },
+    {
       "matchManagers": ["dockerfile"],
       "addLabels": ["docker"]
     },
