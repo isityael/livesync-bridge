@@ -10,7 +10,7 @@ variables:
 
 steps:
   - name: build-and-push
-    image: woodpeckerci/plugin-docker-buildx@sha256:9a22c00b4952e405d11e66d29772edbeb1f7b24f27f71cda251ecb838e725e86
+    image: woodpeckerci/plugin-docker-buildx@sha256:44a6bc24b08cd14fe40d91023e16b650c466be6ef5aa00e1d6d7fd9920382bd9
     privileged: true
     settings:
       registry: harbor.m0sh1.cc
@@ -108,7 +108,7 @@ steps:
       - rm -rf /tmp/notation $HOME/.docker/config.json
 
   - name: github-release
-    image: woodpeckerci/plugin-release@sha256:686729abfd0c2a6841bc4f12f4bafe92d23697b00595af82acac3095ded71d1b
+    image: woodpeckerci/plugin-release@sha256:4b2e6d9474238753a90deab7fdc8c521b1a6ffd9d816de964616bf13f2572672
     settings:
       api_key:
         from_secret: github_token
