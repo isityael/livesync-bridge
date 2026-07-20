@@ -51,7 +51,7 @@ steps:
       - pnpm test
 
   - name: build-and-push
-    image: woodpeckerci/plugin-docker-buildx@sha256:44a6bc24b08cd14fe40d91023e16b650c466be6ef5aa00e1d6d7fd9920382bd9
+    image: woodpeckerci/plugin-docker-buildx@sha256:2f5d25c6e737e641d9caaca1350c15d80b3102abf34b64941d8af473eb071009
     privileged: true
     settings:
       registry: harbor.m0sh1.cc
