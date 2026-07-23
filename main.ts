@@ -11,6 +11,9 @@ import {
   localStorageStateDir,
   recoverMalformedLocalStorage,
 } from "./runtime/node_compat.ts";
+import { HealthStatus, startHealthServer } from "./runtime/health.ts";
+import { retryWithFailureLimit } from "./runtime/retry.ts";
+import { TombstoneSafetyGuard } from "./runtime/sync_safety.ts";
 
 const KEY = "LSB_";
 const debugLogging =
@@ -19,7 +22,34 @@ defaultLoggerEnv.minLogLevel = debugLogging ? LOG_LEVEL_DEBUG : LOG_LEVEL_INFO;
 const configFile = process.env[`${KEY}CONFIG`] || "./dat/config.json";
 const stateDir = localStorageStateDir();
 
-installLocalStorage(stateDir);
+try {
+  installLocalStorage(stateDir);
+} catch (error) {
+  const recovered = await recoverMalformedLocalStorage(
+    stateDir,
+    "initialization",
+    error,
+  );
+  if (!recovered) {
+    throw error;
+  }
+}
+
+function positiveInteger(name: string, fallback: number): number {
+  const value = Number.parseInt(process.env[name] ?? "", 10);
+  return Number.isInteger(value) && value > 0 ? value : fallback;
+}
+
+const health = new HealthStatus(
+  positiveInteger(`${KEY}STALE_AFTER_MS`, 300_000),
+);
+const healthServer = await startHealthServer(
+  health,
+  positiveInteger(`${KEY}HEALTH_PORT`, 8080),
+);
+console.log(
+  `LiveSync Bridge health endpoint listening on port ${healthServer.port}`,
+);
 
 console.log("LiveSync Bridge is now starting...");
 let config: Config = { peers: [] };
@@ -73,10 +103,35 @@ if (!Array.isArray(config.peers) || config.peers.length === 0) {
   process.exit(1);
 }
 console.log("LiveSync Bridge is now started!");
-const hub = new Hub(config);
+const failureLimit = positiveInteger(`${KEY}MAX_CONSECUTIVE_FAILURES`, 3);
+const hub = new Hub(
+  config,
+  health,
+  new TombstoneSafetyGuard(
+    positiveInteger(`${KEY}MAX_TOMBSTONES_PER_CHECKPOINT`, 10),
+  ),
+  failureLimit,
+  (error) => {
+    console.error(
+      `LiveSync Bridge reached ${failureLimit} consecutive runtime failures.`,
+    );
+    console.error(error);
+    process.exit(1);
+  },
+);
 try {
-  await hub.start();
+  await retryWithFailureLimit(() => hub.start(), {
+    failureLimit,
+    retryDelayMs: positiveInteger(`${KEY}RETRY_DELAY_MS`, 10_000),
+    onFailure: (error, failures) => {
+      console.error(
+        `LiveSync Bridge startup attempt ${failures}/${failureLimit} failed.`,
+      );
+      console.error(error);
+    },
+  });
 } catch (ex) {
+  health.markUnhealthy();
   console.error("LiveSync Bridge startup failed!");
   console.error(ex);
   process.exit(1);

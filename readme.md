@@ -30,7 +30,7 @@ Of course, it is multi-directional!
 1. Clone the GitHub Repository
 
 ```git
-git clone --recursive https://github.com/vrtmrz/livesync-bridge
+git clone --recursive https://github.com/isityael/livesync-bridge
 ```
 
 2. Open the config file dat/config.sample.json, edit and save to
@@ -52,7 +52,7 @@ Note: If you want to scan all storage and databases from the beginning, please r
 1. Clone the GitHub Repository
 
 ```git
-git clone https://github.com/vrtmrz/livesync-bridge
+git clone --recursive https://github.com/isityael/livesync-bridge
 ```
 
 2. Open the config file dat/config.sample.json, edit and save to
@@ -63,6 +63,28 @@ git clone https://github.com/vrtmrz/livesync-bridge
 ```bash
 docker compose up -d
 ```
+
+The sole canonical container image is
+`ghcr.io/isityael/livesync-bridge`. The GitHub publication workflow blocks
+critical vulnerabilities and publishes BuildKit provenance and an SBOM before
+keyless signing the resulting digest.
+
+## Health and recovery
+
+`GET /healthz` listens on port `8080` by default. Set `LSB_HEALTH_PORT` to
+change the port. Kubernetes startup, readiness, and liveness probes may use the
+same path: only `healthy` returns HTTP 200; `startup`, `stale`, and `unhealthy`
+return HTTP 503. The response includes phase, checkpoint and remote-activity
+times, conflict count, and replay state, but never credentials or note content.
+
+Persist `LSB_STATE_DIR` across restarts. Malformed state is quarantined and
+forces a full remote replay before local tombstones can be sent. Additional
+controls are:
+
+- `LSB_MAX_CONSECUTIVE_FAILURES` (default `3`)
+- `LSB_RETRY_DELAY_MS` (default `10000`)
+- `LSB_STALE_AFTER_MS` (default `300000`)
+- `LSB_MAX_TOMBSTONES_PER_CHECKPOINT` (default `10`)
 
 # Configuration
 

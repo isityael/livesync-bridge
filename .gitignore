@@ -10,6 +10,7 @@ vault*/
 vault*/*
 dat/config.json
 dat/config.json.*
+dat/location_data/
 
 # Keep build essentials tracked
 !.gitignore
