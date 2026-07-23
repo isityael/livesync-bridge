@@ -226,10 +226,11 @@ export class PeerCouchDB extends Peer {
                     this.config.database
             }`;
             if (this.getSetting("remote-created") !== remoteIdentity) {
-                this.man.since = "";
+                this.man.since = "0";
                 this.normalLog(
                     `Remote database is populated (${remoteDocCount} docs) but missing the milestone document. fetch from the first without reseeding local content.`,
                 );
+                this.setSetting("since", this.man.since);
                 this.setSetting("remote-created", remoteIdentity);
             } else {
                 this.normalLog(
@@ -240,17 +241,18 @@ export class PeerCouchDB extends Peer {
         if (w) {
             const created = w.created;
             if (this.getSetting("remote-created") !== `${created}`) {
-                this.man.since = "";
+                this.man.since = "0";
                 this.normalLog(
                     `Remote database looks like rebuilt. fetch from the first again.`,
                 );
+                this.setSetting("since", this.man.since);
                 this.setSetting("remote-created", `${created}`);
             } else {
                 this.normalLog(`Watch starting from ${this.man.since}`);
             }
         }
         this.man.beginWatch(
-            async (entry) => {
+            async (entry, seq) => {
                 const d = entry.type == "plain"
                     ? entry.data
                     : new Uint8Array(decodeBinary(entry.data));
@@ -272,9 +274,12 @@ export class PeerCouchDB extends Peer {
                     this.sendLog(`${path} change detected`);
                     await this.dispatch(path, docData);
                 }
+                if (seq !== undefined) {
+                    this.man.since = `${seq}`;
+                    this.setSetting("since", this.man.since);
+                }
             },
             (entry) => {
-                this.setSetting("since", this.man.since);
                 if (entry.path.indexOf(":") !== -1) return false;
                 if (!entry.path.startsWith(baseDir)) return false;
                 let path = entry.path.substring(baseDir.length);
