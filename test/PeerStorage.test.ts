@@ -172,6 +172,8 @@ describe("PeerStorage", () => {
   it("retries the same destination write after its processor fails once", async () => {
     const root = await mkdtemp(path.join(tmpdir(), "livesync-bridge-"));
     try {
+      installLocalStorage(root, true);
+      localStorage.clear();
       const baseDir = path.join(root, "vault");
       const marker = path.join(root, "processor-attempted");
       await mkdir(baseDir);
@@ -204,6 +206,8 @@ describe("PeerStorage", () => {
   it("retries the same destination delete after its processor fails once", async () => {
     const root = await mkdtemp(path.join(tmpdir(), "livesync-bridge-"));
     try {
+      installLocalStorage(root, true);
+      localStorage.clear();
       const baseDir = path.join(root, "vault");
       const marker = path.join(root, "processor-attempted");
       await mkdir(baseDir);
