@@ -57,16 +57,24 @@ export class PeerCouchDB extends Peer {
     }
     await this.man.ready.promise;
     const path = this.toLocalPath(pathSrc);
-    if (await this.isRepeating(pathSrc, false)) {
+    const reservation = await this.reserveChange(pathSrc, false);
+    if (reservation.repeating) {
       return true;
     }
-    const r = await this.man.delete(path);
-    if (r) {
-      this.receiveLog(` ${path} deleted`);
-    } else {
-      this.receiveLog(` ${path} delete failed`, LOG_LEVEL_NOTICE);
+    try {
+      const r = await this.man.delete(path);
+      if (r) {
+        reservation.commit();
+        this.receiveLog(` ${path} deleted`);
+      } else {
+        reservation.rollback();
+        this.receiveLog(` ${path} delete failed`, LOG_LEVEL_NOTICE);
+      }
+      return r;
+    } catch (error) {
+      reservation.rollback();
+      throw error;
     }
-    return r;
   }
   async put(pathSrc: string, data: FileData): Promise<boolean> {
     if (this.shouldIgnoreRelativePath(pathSrc)) {
@@ -75,43 +83,52 @@ export class PeerCouchDB extends Peer {
     }
     await this.man.ready.promise;
     const path = this.toLocalPath(pathSrc);
-    if (await this.isRepeating(pathSrc, data)) {
+    const reservation = await this.reserveChange(pathSrc, data);
+    if (reservation.repeating) {
       return true;
     }
-    const type = isPlainText(path) ? "plain" : "newnote";
-    const info: FileInfo = {
-      ctime: data.ctime,
-      mtime: data.mtime,
-      size: data.size,
-    };
-    const saveData =
-      data.data instanceof Uint8Array
-        ? createBinaryBlob(data.data)
-        : createTextBlob(data.data);
-    const old = (await this.man.get(path as FilePathWithPrefix, true)) as
-      | false
-      | MetaEntry;
-    // const old = await this.getMeta(path as FilePathWithPrefix);
-    if (old && Math.abs(this.compareDate(info, old)) < 3600) {
-      const oldDoc = await this.man.getByMeta(old);
-      if (oldDoc && "data" in oldDoc) {
-        const d =
-          oldDoc.type == "plain"
-            ? createTextBlob(oldDoc.data)
-            : createBinaryBlob(new Uint8Array(decodeBinary(oldDoc.data)));
-        if (await isDocContentSame(d, saveData)) {
-          this.normalLog(` Skipped (Same) ${path} `);
-          return true;
+    try {
+      const type = isPlainText(path) ? "plain" : "newnote";
+      const info: FileInfo = {
+        ctime: data.ctime,
+        mtime: data.mtime,
+        size: data.size,
+      };
+      const saveData =
+        data.data instanceof Uint8Array
+          ? createBinaryBlob(data.data)
+          : createTextBlob(data.data);
+      const old = (await this.man.get(path as FilePathWithPrefix, true)) as
+        | false
+        | MetaEntry;
+      // const old = await this.getMeta(path as FilePathWithPrefix);
+      if (old && Math.abs(this.compareDate(info, old)) < 3600) {
+        const oldDoc = await this.man.getByMeta(old);
+        if (oldDoc && "data" in oldDoc) {
+          const d =
+            oldDoc.type == "plain"
+              ? createTextBlob(oldDoc.data)
+              : createBinaryBlob(new Uint8Array(decodeBinary(oldDoc.data)));
+          if (await isDocContentSame(d, saveData)) {
+            reservation.commit();
+            this.normalLog(` Skipped (Same) ${path} `);
+            return true;
+          }
         }
       }
+      const r = await this.man.put(path, saveData, info, type);
+      if (r) {
+        reservation.commit();
+        this.receiveLog(` ${path} saved`);
+      } else {
+        reservation.rollback();
+        this.receiveLog(` ${path} ignored`);
+      }
+      return r;
+    } catch (error) {
+      reservation.rollback();
+      throw error;
     }
-    const r = await this.man.put(path, saveData, info, type);
-    if (r) {
-      this.receiveLog(` ${path} saved`);
-    } else {
-      this.receiveLog(` ${path} ignored`);
-    }
-    return r;
   }
   async get(pathSrc: FilePathWithPrefix): Promise<false | FileData> {
     const path = this.toLocalPath(pathSrc) as FilePathWithPrefix;
@@ -342,16 +359,30 @@ export class PeerCouchDB extends Peer {
   }
   async dispatch(path: string, data: FileData | false) {
     if (data === false) return;
-    if (!(await this.isRepeating(path, data))) {
-      await this.dispatchToHub(this, this.toGlobalPath(path), data);
+    const reservation = await this.reserveChange(path, data);
+    if (!reservation.repeating) {
+      try {
+        await this.dispatchToHub(this, this.toGlobalPath(path), data);
+        reservation.commit();
+      } catch (error) {
+        reservation.rollback();
+        throw error;
+      }
     }
     // else {
     //     this.receiveLog(`${path} dispatch repeating`);
     // }
   }
   async dispatchDeleted(path: string) {
-    if (!(await this.isRepeating(path, false))) {
-      await this.dispatchToHub(this, this.toGlobalPath(path), false);
+    const reservation = await this.reserveChange(path, false);
+    if (!reservation.repeating) {
+      try {
+        await this.dispatchToHub(this, this.toGlobalPath(path), false);
+        reservation.commit();
+      } catch (error) {
+        reservation.rollback();
+        throw error;
+      }
     }
   }
   async stop(): Promise<void> {

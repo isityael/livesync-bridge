@@ -90,14 +90,22 @@ export abstract class Peer {
   abstract start(): Promise<void>;
   abstract stop(): Promise<void>;
   cache = new LRUCache<string, string>(300, 10000000, true);
-  async isRepeating(path: string, data: FileData | false) {
-    const d = await computeHash(data === false ? ["\u0001Deleted"] : data.data);
-
-    if (this.cache.has(path) && this.cache.get(path) == d) {
-      return true;
-    }
-    this.cache.set(path, d);
-    return false;
+  protected async reserveChange(path: string, data: FileData | false) {
+    const hash = await computeHash(
+      data === false ? ["\u0001Deleted"] : data.data,
+    );
+    let settled = false;
+    return {
+      repeating: this.cache.has(path) && this.cache.get(path) === hash,
+      commit: () => {
+        if (settled) return;
+        settled = true;
+        this.cache.set(path, hash);
+      },
+      rollback: () => {
+        settled = true;
+      },
+    };
   }
   receiveLog(message: string, level?: LOG_LEVEL) {
     Logger(`[${this.config.name}] <-- ${message}`, level ?? LOG_LEVEL_INFO);

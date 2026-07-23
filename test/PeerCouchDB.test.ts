@@ -2,7 +2,9 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
+import { Hub } from "../Hub.ts";
 import { PeerCouchDB } from "../PeerCouchDB.ts";
+import type { Peer } from "../Peer.ts";
 import { installLocalStorage } from "../runtime/node_compat.ts";
 import type { PeerCouchDBConf } from "../types.ts";
 
@@ -24,6 +26,43 @@ function couchPeer(stateDir: string): PeerCouchDB {
 }
 
 describe("PeerCouchDB watch checkpoints", () => {
+  it("retries identical destination puts and deletes after the adapter fails once", async () => {
+    const root = await mkdtemp(path.join(tmpdir(), "livesync-couch-"));
+    try {
+      const peer = couchPeer(root);
+      let putAttempts = 0;
+      let deleteAttempts = 0;
+      peer.man = {
+        ready: { promise: Promise.resolve() },
+        get: async () => false,
+        put: async () => {
+          putAttempts += 1;
+          return putAttempts > 1;
+        },
+        delete: async () => {
+          deleteAttempts += 1;
+          return deleteAttempts > 1;
+        },
+      } as never;
+      const data = {
+        ctime: 1,
+        mtime: 1,
+        size: 8,
+        data: ["retry me"],
+      };
+
+      await expect(peer.put("retry.md", data)).resolves.toBe(false);
+      await expect(peer.put("retry.md", data)).resolves.toBe(true);
+      await expect(peer.delete("retry.md")).resolves.toBe(false);
+      await expect(peer.delete("retry.md")).resolves.toBe(true);
+
+      expect(putAttempts).toBe(2);
+      expect(deleteAttempts).toBe(2);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
   it("fully replays remote-only notes, tombstones, conflicts, and ignore rules before confirming a baseline", async () => {
     const root = await mkdtemp(path.join(tmpdir(), "livesync-couch-"));
     const dispatched: Array<{ path: string; deleted: boolean }> = [];
@@ -338,6 +377,83 @@ describe("PeerCouchDB watch checkpoints", () => {
 
       expect(peer.man.since).toBe("13-new");
       expect(peer.getSetting("since")).toBe("13-new");
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  it("retries the same watched change after a destination fails before advancing its checkpoint", async () => {
+    const root = await mkdtemp(path.join(tmpdir(), "livesync-couch-"));
+    try {
+      installLocalStorage(root, true);
+      localStorage.clear();
+      const config: PeerCouchDBConf = {
+        type: "couchdb",
+        name: "test-couch",
+        baseDir: "",
+        group: "notes",
+        url: "http://127.0.0.1:5984",
+        database: "obsidian",
+        username: "test",
+        password: "test",
+        passphrase: "",
+        obfuscatePassphrase: "",
+      };
+      const hub = new Hub({ peers: [] });
+      const source = new PeerCouchDB(config, hub.dispatch.bind(hub));
+      source.setSetting("remote-created", "same-database");
+      source.setSetting("baseline-remote", "same-database");
+      source.setSetting("since", "12");
+      let destinationAttempts = 0;
+      const destination = {
+        config: {
+          type: "storage",
+          name: "local",
+          baseDir: "",
+          group: "notes",
+        },
+        put: async () => {
+          destinationAttempts += 1;
+          return destinationAttempts > 1;
+        },
+      } as unknown as Peer;
+      hub.peers = [source, destination];
+
+      let watchCallback:
+        | ((entry: Record<string, any>, seq?: string | number) => Promise<void>)
+        | undefined;
+      source.man = {
+        ready: { promise: Promise.resolve() },
+        since: "12",
+        rawGet: async () => ({ created: "same-database" }),
+        liveSyncLocalDB: {
+          localDatabase: {
+            info: async () => ({ db_name: "obsidian", doc_count: 1 }),
+          },
+        },
+        beginWatch: (callback: typeof watchCallback) => {
+          watchCallback = callback;
+        },
+      } as never;
+      await source.start();
+      const entry = {
+        type: "plain",
+        path: "remote-only.md",
+        data: ["preserve"],
+        ctime: 1,
+        mtime: 1,
+        size: 8,
+        deleted: false,
+      };
+
+      await expect(watchCallback?.(entry, "13")).rejects.toThrow(
+        "local failed to save remote-only.md",
+      );
+      expect(source.getSetting("since")).toBe("12");
+      await expect(watchCallback?.(entry, "13")).resolves.toBeUndefined();
+
+      expect(destinationAttempts).toBe(2);
+      expect(source.getSetting("since")).toBe("13");
     } finally {
       await rm(root, { recursive: true, force: true });
     }
