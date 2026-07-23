@@ -75,6 +75,18 @@ describe("health endpoint", () => {
 
     expect(status.snapshot().replayActive).toBe(true);
   });
+
+  it("cannot report healthy while a replay is active", () => {
+    const status = new HealthStatus();
+    status.beginReplay();
+    status.markHealthy();
+
+    expect(status.snapshot()).toMatchObject({
+      status: "startup",
+      phase: "replaying",
+      replayActive: true,
+    });
+  });
 });
 
 describe("bounded failures", () => {
@@ -94,7 +106,7 @@ describe("bounded failures", () => {
 });
 
 describe("tombstone safety", () => {
-  it("requires a confirmed checkpoint and bounds tombstones per baseline", () => {
+  it("requires a confirmed baseline and resets the bound only for a new checkpoint", () => {
     const guard = new TombstoneSafetyGuard(2);
     expect(guard.allowTombstone()).toBe(false);
 
@@ -102,6 +114,10 @@ describe("tombstone safety", () => {
     expect(guard.allowTombstone()).toBe(true);
     expect(guard.allowTombstone()).toBe(true);
     expect(guard.allowTombstone()).toBe(false);
+    guard.confirmBaseline("checkpoint-12");
+    expect(guard.allowTombstone()).toBe(false);
+    guard.advanceCheckpoint("checkpoint-13");
+    expect(guard.allowTombstone()).toBe(true);
   });
 });
 

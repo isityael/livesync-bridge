@@ -49,7 +49,7 @@ export class PeerStorage extends Peer {
     if (!resolved) return false;
     const { localPath: lp, storagePath: path } = resolved;
     if (await this.isRepeating(lp, false)) {
-      return false;
+      return true;
     }
     try {
       await rm(path);
@@ -78,7 +78,7 @@ export class PeerStorage extends Peer {
     const { localPath: lp, storagePath: path } = resolved;
     if (await this.isRepeating(lp, data)) {
       this.receiveLog(`${lp} save repeating`);
-      return false;
+      return true;
     }
     try {
       const dirName = dirname(path);

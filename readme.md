@@ -66,8 +66,9 @@ docker compose up -d
 
 The sole canonical container image is
 `ghcr.io/isityael/livesync-bridge`. The GitHub publication workflow blocks
-critical vulnerabilities and publishes BuildKit provenance and an SBOM before
-keyless signing the resulting digest.
+critical vulnerabilities on the immutable digest, keylessly signs that digest,
+and only then applies canonical tags. The image is built once with BuildKit
+provenance and an SBOM.
 
 ## Health and recovery
 
@@ -78,8 +79,10 @@ return HTTP 503. The response includes phase, checkpoint and remote-activity
 times, conflict count, and replay state, but never credentials or note content.
 
 Persist `LSB_STATE_DIR` across restarts. Malformed state is quarantined and
-forces a full remote replay before local tombstones can be sent. Additional
-controls are:
+forces a full remote replay before local tombstones can be sent. Replay and
+watch callbacks are processed durably in sequence; a failed destination write
+does not advance the checkpoint. Each CouchDB destination has its own confirmed
+baseline and per-checkpoint tombstone budget. Additional controls are:
 
 - `LSB_MAX_CONSECUTIVE_FAILURES` (default `3`)
 - `LSB_RETRY_DELAY_MS` (default `10000`)

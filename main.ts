@@ -13,7 +13,6 @@ import {
 } from "./runtime/node_compat.ts";
 import { HealthStatus, startHealthServer } from "./runtime/health.ts";
 import { retryWithFailureLimit } from "./runtime/retry.ts";
-import { TombstoneSafetyGuard } from "./runtime/sync_safety.ts";
 
 const KEY = "LSB_";
 const debugLogging =
@@ -104,12 +103,11 @@ if (!Array.isArray(config.peers) || config.peers.length === 0) {
 }
 console.log("LiveSync Bridge is now started!");
 const failureLimit = positiveInteger(`${KEY}MAX_CONSECUTIVE_FAILURES`, 3);
+const retryDelayMs = positiveInteger(`${KEY}RETRY_DELAY_MS`, 10_000);
 const hub = new Hub(
   config,
   health,
-  new TombstoneSafetyGuard(
-    positiveInteger(`${KEY}MAX_TOMBSTONES_PER_CHECKPOINT`, 10),
-  ),
+  positiveInteger(`${KEY}MAX_TOMBSTONES_PER_CHECKPOINT`, 10),
   failureLimit,
   (error) => {
     console.error(
@@ -118,11 +116,12 @@ const hub = new Hub(
     console.error(error);
     process.exit(1);
   },
+  retryDelayMs,
 );
 try {
   await retryWithFailureLimit(() => hub.start(), {
     failureLimit,
-    retryDelayMs: positiveInteger(`${KEY}RETRY_DELAY_MS`, 10_000),
+    retryDelayMs,
     onFailure: (error, failures) => {
       console.error(
         `LiveSync Bridge startup attempt ${failures}/${failureLimit} failed.`,
