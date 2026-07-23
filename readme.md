@@ -4,7 +4,7 @@
 
 This Forgejo-first fork is maintained for the m0sh1.cc self-hosted LiveSync
 tooling stack. The canonical repository is
-`https://git.m0sh1.cc/m0sh1/livesync-bridge`; GitHub is maintained as a public
+`https://git.m0sh1.cc/isityael/livesync-bridge`; GitHub is maintained as a public
 push mirror at `https://github.com/isityael/livesync-bridge`.
 
 ![screenshot](https://github.com/vrtmrz/livesync-bridge/assets/45774780/457f8909-14e4-4d86-bcf9-24fad7d3342a)
