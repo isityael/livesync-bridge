@@ -1,5 +1,5 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { opendir, rm, stat } from "node:fs/promises";
+import { opendir, rename, stat } from "node:fs/promises";
 import path from "node:path";
 
 const MALFORMED_LOCAL_STORAGE_MARKER = "database disk image is malformed";
@@ -102,9 +102,17 @@ export function localStorageStateDir(): string {
   return process.env.LSB_STATE_DIR ?? "./dat";
 }
 
-export function installLocalStorage(stateDir = localStorageStateDir()): void {
+export function installLocalStorage(
+  stateDir = localStorageStateDir(),
+  force = false,
+): void {
   const existing = Object.getOwnPropertyDescriptor(globalThis, "localStorage");
-  if (existing && "value" in existing && existing.value !== undefined) {
+  if (
+    !force &&
+    existing &&
+    "value" in existing &&
+    existing.value !== undefined
+  ) {
     return;
   }
   const locationDataDir = path.join(stateDir, "location_data");
@@ -143,7 +151,7 @@ export async function removeCorruptLocalStorageFiles(
       continue;
     }
     if (entry.isFile() && CORRUPT_LOCAL_STORAGE_FILES.has(entry.name)) {
-      await rm(entryPath, { force: true });
+      await rename(entryPath, `${entryPath}.corrupt-${Date.now()}`);
       removed += 1;
     }
   }
@@ -167,20 +175,16 @@ export async function recoverMalformedLocalStorage(
   const locationDataDir = path.join(stateDir, "location_data");
   const removedFiles = await removeCorruptLocalStorageFiles(locationDataDir);
   console.error(
-    `[livesync-bridge] removed ${removedFiles} corrupted localStorage files under ${locationDataDir}`,
+    `[livesync-bridge] quarantined ${removedFiles} corrupted localStorage files under ${locationDataDir}`,
   );
 
-  try {
-    localStorage.clear();
-  } catch {
-    Object.defineProperty(globalThis, "localStorage", {
-      configurable: true,
-      value: new FileLocalStorage(
-        path.join(locationDataDir, "local_storage.json"),
-      ),
-      writable: true,
-    });
-  }
+  Object.defineProperty(globalThis, "localStorage", {
+    configurable: true,
+    value: new FileLocalStorage(
+      path.join(locationDataDir, "local_storage.json"),
+    ),
+    writable: true,
+  });
 
   try {
     assertLocalStorageHealthy();

@@ -37,6 +37,7 @@ COPY --from=builder --chown=node:node /app/data /app/data
 
 VOLUME /app/dat
 VOLUME /app/data
+EXPOSE 8080
 
 USER node
 

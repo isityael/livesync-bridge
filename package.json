@@ -11,7 +11,7 @@
   "scripts": {
     "build": "node scripts/build.mjs",
     "clean": "rm -rf dist coverage",
-    "fmt:check": "prettier --check .github/renovate.json .github/workflows/publish-ghcr.yaml .woodpecker/build.yaml .woodpecker/release.yaml package.json tsconfig.json eslint.config.js vitest.config.ts scripts/build.mjs runtime/*.mjs runtime/node_compat.ts stubs/*.ts test/*.ts main.ts Peer.ts PeerStorage.ts readme.md",
+    "fmt:check": "prettier --check .github/renovate.json .github/workflows/publish-ghcr.yaml .woodpecker/build.yaml .mise.toml package.json pnpm-workspace.yaml tsconfig.json eslint.config.js vitest.config.ts scripts/build.mjs runtime/*.mjs runtime/*.ts stubs/*.ts test/*.ts main.ts Hub.ts Peer.ts PeerCouchDB.ts PeerStorage.ts readme.md",
     "lint": "node --import ./runtime/typescript-eslint-compat.mjs ./node_modules/eslint/bin/eslint.js *.ts stubs/*.ts runtime/*.ts test/*.ts vitest.config.ts",
     "start": "node dist/main.js",
     "test": "pnpm run build && vitest run",
