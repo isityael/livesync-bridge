@@ -81,6 +81,9 @@ export abstract class Peer {
 
     return false;
   }
+  acceptsPath(relativePath: string): boolean {
+    return !this.shouldIgnoreRelativePath(relativePath);
+  }
   abstract delete(path: string): Promise<boolean>;
   abstract put(path: string, data: FileData): Promise<boolean>;
   abstract get(path: FilePathWithPrefix): Promise<false | FileData>;

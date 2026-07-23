@@ -1,5 +1,4 @@
 import {
-  DirectFileManipulator,
   FileInfo,
   MetaEntry,
   ReadyEntry,
@@ -20,6 +19,7 @@ import {
   isDocContentSame,
   unique,
 } from "./lib/src/common/utils.ts";
+import { DurableDirectFileManipulator } from "./runtime/durable_manipulator.ts";
 
 export interface PeerRuntimeHooks {
   beginReplay(): void;
@@ -28,14 +28,15 @@ export interface PeerRuntimeHooks {
   recordCheckpoint(checkpoint: string): void;
   confirmBaseline(checkpoint: string): void;
   invalidateBaseline(): void;
-  recordFailure?(error: unknown): void;
+  recordFailure?(error: unknown): boolean;
   resetFailures?(): void;
+  watchRetryDelayMs?: number;
 }
 
 // export class PeerInstance()
 
 export class PeerCouchDB extends Peer {
-  man: DirectFileManipulator;
+  man: DurableDirectFileManipulator;
   declare config: PeerCouchDBConf;
   private readonly runtime?: PeerRuntimeHooks;
   constructor(
@@ -45,7 +46,7 @@ export class PeerCouchDB extends Peer {
   ) {
     super(conf, dispatcher);
     this.runtime = runtime;
-    this.man = new DirectFileManipulator(conf);
+    this.man = new DurableDirectFileManipulator(conf);
     // Fetch remote since.
     this.man.since = this.getSetting("since") || "now";
   }
@@ -57,7 +58,7 @@ export class PeerCouchDB extends Peer {
     await this.man.ready.promise;
     const path = this.toLocalPath(pathSrc);
     if (await this.isRepeating(pathSrc, false)) {
-      return false;
+      return true;
     }
     const r = await this.man.delete(path);
     if (r) {
@@ -75,7 +76,7 @@ export class PeerCouchDB extends Peer {
     await this.man.ready.promise;
     const path = this.toLocalPath(pathSrc);
     if (await this.isRepeating(pathSrc, data)) {
-      return false;
+      return true;
     }
     const type = isPlainText(path) ? "plain" : "newnote";
     const info: FileInfo = {
@@ -100,7 +101,7 @@ export class PeerCouchDB extends Peer {
             : createBinaryBlob(new Uint8Array(decodeBinary(oldDoc.data)));
         if (await isDocContentSame(d, saveData)) {
           this.normalLog(` Skipped (Same) ${path} `);
-          return false;
+          return true;
         }
       }
     }
@@ -270,77 +271,74 @@ export class PeerCouchDB extends Peer {
       },
       seq?: string | number,
     ) => {
-      try {
-        const conflicts = Array.isArray(entry._conflicts)
-          ? entry._conflicts.length
-          : 0;
-        this.runtime?.recordRemoteActivity(conflicts);
-        const d =
-          entry.type == "plain"
-            ? entry.data
-            : new Uint8Array(decodeBinary(entry.data));
-        let path = entry.path.substring(baseDir.length);
-        if (path.startsWith("/")) {
-          path = path.substring(1);
-        }
-        if (entry.deleted || entry._deleted) {
-          this.sendLog(`${path} delete detected`);
-          await this.dispatchDeleted(path);
-        } else {
-          const docData = {
-            ctime: entry.ctime,
-            mtime: entry.mtime,
-            size: entry.size,
-            deleted: entry.deleted || entry._deleted,
-            data: d,
-          };
-          this.sendLog(`${path} change detected`);
-          await this.dispatch(path, docData);
-        }
-        if (seq !== undefined) {
-          this.man.since = `${seq}`;
-          this.setSetting("since", this.man.since);
-          this.runtime?.recordCheckpoint(this.man.since);
-        }
-        this.runtime?.resetFailures?.();
-      } catch (error) {
-        this.runtime?.recordFailure?.(error);
-        throw error;
+      const conflicts = Array.isArray(entry._conflicts)
+        ? entry._conflicts.length
+        : 0;
+      this.runtime?.recordRemoteActivity(conflicts);
+      const d =
+        entry.type == "plain"
+          ? entry.data
+          : new Uint8Array(decodeBinary(entry.data));
+      let path = entry.path.substring(baseDir.length);
+      if (path.startsWith("/")) {
+        path = path.substring(1);
       }
+      if (entry.deleted || entry._deleted) {
+        this.sendLog(`${path} delete detected`);
+        await this.dispatchDeleted(path);
+      } else {
+        const docData = {
+          ctime: entry.ctime,
+          mtime: entry.mtime,
+          size: entry.size,
+          deleted: entry.deleted || entry._deleted,
+          data: d,
+        };
+        this.sendLog(`${path} change detected`);
+        await this.dispatch(path, docData);
+      }
+      if (seq !== undefined) {
+        this.man.since = `${seq}`;
+        this.setSetting("since", this.man.since);
+        this.runtime?.recordCheckpoint(this.man.since);
+      }
+      this.runtime?.resetFailures?.();
     };
 
     if (!baselineConfirmed) {
       this.runtime?.beginReplay();
-      let replayError: unknown;
-      const replayCallback = async (
-        entry: ReadyEntry,
-        seq?: string | number,
-      ) => {
-        try {
-          await processEntry(entry, seq);
-        } catch (error) {
-          replayError = error;
-          throw error;
-        }
-      };
-      const lastSequence = await this.man.followUpdates(
-        replayCallback,
-        interested,
-      );
-      if (replayError) {
-        throw replayError;
+      try {
+        const lastSequence = await this.man.followUpdates(
+          processEntry,
+          interested,
+        );
+        this.man.since = `${lastSequence || this.man.since || "0"}`;
+        this.setSetting("since", this.man.since);
+        this.setSetting("baseline-remote", remoteIdentity);
+        this.runtime?.recordCheckpoint(this.man.since);
+        this.runtime?.confirmBaseline(this.man.since);
+      } finally {
+        this.runtime?.completeReplay();
       }
-      this.man.since = `${lastSequence || this.man.since || "0"}`;
-      this.setSetting("since", this.man.since);
-      this.setSetting("baseline-remote", remoteIdentity);
-      this.runtime?.recordCheckpoint(this.man.since);
-      this.runtime?.confirmBaseline(this.man.since);
-      this.runtime?.completeReplay();
     } else {
       this.runtime?.confirmBaseline(this.man.since || "0");
     }
 
-    this.man.beginWatch(processEntry, interested);
+    this.man.beginWatch(
+      processEntry,
+      interested,
+      (error) => {
+        const shouldReconnect = this.runtime?.recordFailure?.(error) ?? false;
+        if (shouldReconnect) {
+          this.normalLog(
+            "Live changes feed failed; reconnecting within the configured failure bound.",
+            LOG_LEVEL_NOTICE,
+          );
+        }
+        return shouldReconnect;
+      },
+      this.runtime?.watchRetryDelayMs,
+    );
   }
   async dispatch(path: string, data: FileData | false) {
     if (data === false) return;

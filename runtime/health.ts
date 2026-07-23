@@ -30,9 +30,16 @@ export class HealthStatus {
 
   completeReplay(): void {
     this.activeReplays = Math.max(0, this.activeReplays - 1);
+    if (this.activeReplays === 0 && this.phase === "replaying") {
+      this.phase = "startup";
+    }
   }
 
   markHealthy(): void {
+    if (this.activeReplays > 0) {
+      this.phase = "replaying";
+      return;
+    }
     this.phase = "healthy";
   }
 
@@ -61,7 +68,7 @@ export class HealthStatus {
       now - this.lastReplayProgress > this.staleAfterMs
     ) {
       status = "stale";
-    } else if (this.phase === "healthy") {
+    } else if (this.phase === "healthy" && this.activeReplays === 0) {
       status = "healthy";
     } else {
       status = "startup";

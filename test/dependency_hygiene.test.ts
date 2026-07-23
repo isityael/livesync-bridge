@@ -25,3 +25,20 @@ describe("dependency hygiene", () => {
     expect(lockText).not.toContain("uuid@8.3.2");
   });
 });
+
+describe("canonical image publication", () => {
+  it("builds once by digest and applies tags only after scan and signing", async () => {
+    const workflow = await readFile(
+      new URL("../.github/workflows/publish-ghcr.yaml", import.meta.url),
+      "utf8",
+    );
+    expect(workflow.match(/uses: docker\/build-push-action/g)).toHaveLength(1);
+    expect(workflow).toContain("push-by-digest=true");
+    const scan = workflow.indexOf("Block critical vulnerabilities");
+    const sign = workflow.indexOf("Sign image (keyless)");
+    const tag = workflow.indexOf("Publish canonical tags");
+    expect(scan).toBeGreaterThan(0);
+    expect(sign).toBeGreaterThan(scan);
+    expect(tag).toBeGreaterThan(sign);
+  });
+});

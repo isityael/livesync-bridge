@@ -218,6 +218,50 @@ describe("PeerCouchDB watch checkpoints", () => {
     }
   });
 
+  it("always clears replay health state when replay fails", async () => {
+    const root = await mkdtemp(path.join(tmpdir(), "livesync-couch-"));
+    let activeReplays = 0;
+    try {
+      installLocalStorage(root, true);
+      localStorage.clear();
+      const peer = couchPeer(root);
+      peer.setSetting("remote-created", "old");
+      peer.man = {
+        ready: { promise: Promise.resolve() },
+        since: "now",
+        rawGet: async () => ({ created: "new" }),
+        liveSyncLocalDB: {
+          localDatabase: {
+            info: async () => ({ db_name: "obsidian", doc_count: 1 }),
+          },
+        },
+        followUpdates: async () => {
+          throw new Error("changes feed failed");
+        },
+        beginWatch: () => {},
+      } as never;
+      Object.assign(peer, {
+        runtime: {
+          beginReplay: () => {
+            activeReplays += 1;
+          },
+          completeReplay: () => {
+            activeReplays -= 1;
+          },
+          recordRemoteActivity: () => {},
+          recordCheckpoint: () => {},
+          confirmBaseline: () => {},
+          invalidateBaseline: () => {},
+        },
+      });
+
+      await expect(peer.start()).rejects.toThrow("changes feed failed");
+      expect(activeReplays).toBe(0);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
   it("uses sequence zero after a remote database rebuild", async () => {
     const root = await mkdtemp(path.join(tmpdir(), "livesync-couch-"));
     try {
