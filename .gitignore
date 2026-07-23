@@ -14,3 +14,7 @@ dat/config.json.*
 # Keep build essentials tracked
 !.gitignore
 !.dockerignore
+
+.vscode/
+
+dist/
