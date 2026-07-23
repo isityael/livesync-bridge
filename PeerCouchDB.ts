@@ -33,6 +33,10 @@ export class PeerCouchDB extends Peer {
         this.man.since = this.getSetting("since") || "now";
     }
     async delete(pathSrc: string): Promise<boolean> {
+        if (this.shouldIgnoreRelativePath(pathSrc)) {
+            this.receiveLog(` ${pathSrc} delete ignored`);
+            return false;
+        }
         await this.man.ready.promise;
         const path = this.toLocalPath(pathSrc);
         if (await this.isRepeating(pathSrc, false)) {
@@ -47,6 +51,10 @@ export class PeerCouchDB extends Peer {
         return r;
     }
     async put(pathSrc: string, data: FileData): Promise<boolean> {
+        if (this.shouldIgnoreRelativePath(pathSrc)) {
+            this.receiveLog(` ${pathSrc} save ignored`);
+            return false;
+        }
         await this.man.ready.promise;
         const path = this.toLocalPath(pathSrc);
         if (await this.isRepeating(pathSrc, data)) {
