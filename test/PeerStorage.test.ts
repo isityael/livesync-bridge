@@ -19,6 +19,7 @@ function textData(text: string): FileData {
 function storagePeer(
   baseDir: string,
   dispatch: DispatchFun = async () => {},
+  ignorePaths: string[] = [],
 ): PeerStorage {
   installLocalStorage(path.join(baseDir, ".state"));
   localStorage.clear();
@@ -27,6 +28,7 @@ function storagePeer(
     name: "test-storage",
     baseDir,
     scanOfflineChanges: true,
+    ignorePaths,
   };
   return new PeerStorage(conf, dispatch);
 }
@@ -63,6 +65,55 @@ describe("PeerStorage", () => {
       await expect(
         readFile(path.join(baseDir, "notes/example.md"), "utf8"),
       ).resolves.toBe("ok");
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects incoming writes to ignored paths", async () => {
+    const root = await mkdtemp(path.join(tmpdir(), "livesync-bridge-"));
+    try {
+      const baseDir = path.join(root, "vault");
+      await mkdir(baseDir);
+      const peer = storagePeer(baseDir, async () => {}, [
+        ".basic-memory-config",
+      ]);
+
+      const result = await peer.put(
+        ".basic-memory-config/memory.db-wal",
+        textData("runtime state"),
+      );
+
+      expect(result).toBe(false);
+      await expect(
+        readFile(
+          path.join(baseDir, ".basic-memory-config/memory.db-wal"),
+          "utf8",
+        ),
+      ).rejects.toThrow();
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects incoming deletions for ignored paths", async () => {
+    const root = await mkdtemp(path.join(tmpdir(), "livesync-bridge-"));
+    try {
+      const baseDir = path.join(root, "vault");
+      const ignoredDir = path.join(baseDir, ".basic-memory-config");
+      const ignoredFile = path.join(ignoredDir, "memory.db");
+      await mkdir(ignoredDir, { recursive: true });
+      await writeFile(ignoredFile, "runtime state");
+      const peer = storagePeer(baseDir, async () => {}, [
+        ".basic-memory-config",
+      ]);
+
+      const result = await peer.delete(".basic-memory-config/memory.db");
+
+      expect(result).toBe(false);
+      await expect(readFile(ignoredFile, "utf8")).resolves.toBe(
+        "runtime state",
+      );
     } finally {
       await rm(root, { recursive: true, force: true });
     }

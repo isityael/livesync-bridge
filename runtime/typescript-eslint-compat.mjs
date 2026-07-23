@@ -11,6 +11,7 @@ registerHooks({
     if (
       specifier === "typescript" &&
       (context.parentURL?.includes("@typescript-eslint") ||
+        context.parentURL?.includes("/node_modules/typescript-eslint/") ||
         context.parentURL?.includes("ts-api-utils"))
     ) {
       return { shortCircuit: true, url: typescriptCompatUrl };

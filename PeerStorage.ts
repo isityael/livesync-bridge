@@ -41,6 +41,10 @@ export class PeerStorage extends Peer {
   }
 
   async delete(pathSrc: string): Promise<boolean> {
+    if (this.shouldIgnoreRelativePath(pathSrc)) {
+      this.receiveLog(` ${pathSrc} delete ignored`);
+      return false;
+    }
     const resolved = this.resolveStoragePath(pathSrc);
     if (!resolved) return false;
     const { localPath: lp, storagePath: path } = resolved;
@@ -65,6 +69,10 @@ export class PeerStorage extends Peer {
     return true;
   }
   async put(pathSrc: string, data: FileData): Promise<boolean> {
+    if (this.shouldIgnoreRelativePath(pathSrc)) {
+      this.receiveLog(` ${pathSrc} save ignored`);
+      return false;
+    }
     const resolved = this.resolveStoragePath(pathSrc);
     if (!resolved) return false;
     const { localPath: lp, storagePath: path } = resolved;
