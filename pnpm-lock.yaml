@@ -5,7 +5,7 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  uuid: 11.1.1
+  uuid: 14.0.1
 
 importers:
 
@@ -1596,8 +1596,8 @@ packages:
   util-deprecate@1.0.2:
     resolution: {integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==}
 
-  uuid@11.1.1:
-    resolution: {integrity: sha512-vIYxrBCC/N/K+Js3qSN88go7kIfNPssr/hHCesKCQNAjmgvYS2oqr69kIufEG+O4+PfezOH4EbIeHCfFov8ZgQ==}
+  uuid@14.0.1:
+    resolution: {integrity: sha512-6ZxzVpzDXDa3bJWaHilVayA+BH/1zmxCJoVgvmqJnid/gPoKHxUrS/aC/T6LGQtNHT+XHG9fXPJB4d+IrU30Ew==}
     hasBin: true
 
   vite@8.1.5:
@@ -2985,7 +2985,7 @@ snapshots:
       pouchdb-fetch: 9.0.0
       pouchdb-merge: 9.0.0
       pouchdb-utils: 9.0.0
-      uuid: 11.1.1
+      uuid: 14.0.1
     transitivePeerDependencies:
       - encoding
 
@@ -3056,7 +3056,7 @@ snapshots:
     dependencies:
       pouchdb-errors: 9.0.0
       pouchdb-md5: 9.0.0
-      uuid: 11.1.1
+      uuid: 14.0.1
 
   pouchdb-wrappers@5.0.0: {}
 
@@ -3248,7 +3248,7 @@ snapshots:
 
   util-deprecate@1.0.2: {}
 
-  uuid@11.1.1: {}
+  uuid@14.0.1: {}
 
   vite@8.1.5(@types/node@26.1.1)(esbuild@0.28.1):
     dependencies:
