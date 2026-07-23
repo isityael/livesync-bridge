@@ -48,7 +48,8 @@ export class PeerStorage extends Peer {
     const resolved = this.resolveStoragePath(pathSrc);
     if (!resolved) return false;
     const { localPath: lp, storagePath: path } = resolved;
-    if (await this.isRepeating(lp, false)) {
+    const reservation = await this.reserveChange(lp, false);
+    if (reservation.repeating) {
       return true;
     }
     try {
@@ -58,14 +59,24 @@ export class PeerStorage extends Peer {
       // Deletions can race (e.g., the file was already removed locally).
       // Treat ENOENT as success to avoid noisy crash-like logs.
       if (isNotFoundError(ex)) {
+        if (this.config.processor && !(await this.runScript(path, true))) {
+          reservation.rollback();
+          return false;
+        }
+        reservation.commit();
         this.receiveLog(` ${path} already deleted`);
         return true;
       }
+      reservation.rollback();
       this.receiveLog(` ${path} delete failed`, LOG_LEVEL_NOTICE);
       Logger(ex, LOG_LEVEL_VERBOSE);
       return false;
     }
-    this.runScript(path, true);
+    if (this.config.processor && !(await this.runScript(path, true))) {
+      reservation.rollback();
+      return false;
+    }
+    reservation.commit();
     return true;
   }
   async put(pathSrc: string, data: FileData): Promise<boolean> {
@@ -76,7 +87,8 @@ export class PeerStorage extends Peer {
     const resolved = this.resolveStoragePath(pathSrc);
     if (!resolved) return false;
     const { localPath: lp, storagePath: path } = resolved;
-    if (await this.isRepeating(lp, data)) {
+    const reservation = await this.reserveChange(lp, data);
+    if (reservation.repeating) {
       this.receiveLog(`${lp} save repeating`);
       return true;
     }
@@ -96,9 +108,14 @@ export class PeerStorage extends Peer {
       await utimes(path, new Date(data.mtime), new Date(data.mtime));
       this.receiveLog(`${lp} saved`);
       await this.writeFileStat(pathSrc);
-      this.runScript(path, false);
+      if (this.config.processor && !(await this.runScript(path, false))) {
+        reservation.rollback();
+        return false;
+      }
+      reservation.commit();
       return true;
     } catch (ex) {
+      reservation.rollback();
       Logger(ex, LOG_LEVEL_INFO);
       this.receiveLog(`${lp} save failed`);
       return false;
@@ -159,10 +176,12 @@ export class PeerStorage extends Peer {
         this.normalLog("Processor called: Performed successfully.");
         // result.push("Processor called: Performed successfully.")
         this.normalLog(stdoutText);
+        return true;
       } else {
         this.normalLog("Processor called: Performed but with some errors.");
         // result.push("Processor called: Performed but with some errors.")
         this.normalLog(stderrText, LOG_LEVEL_NOTICE);
+        return false;
       }
       // result.push(`\n- Spent ${Math.ceil(end - start) / 1000} ms`);
       // result.push("## --STDOUT--\n")
@@ -170,7 +189,6 @@ export class PeerStorage extends Peer {
       // result.push("## --STDERR--n")
       // result.push("```\n" + stderrText + "\n```");
       // const strResult = result.join("\n");
-      return true;
     } catch (ex) {
       this.normalLog("Processor: Error on processing");
       // this.normalLog(ex);
@@ -233,9 +251,16 @@ export class PeerStorage extends Peer {
       // console.log(data);
       await this.writeFileStat(path);
       await delay(250);
-      if (!(await this.isRepeating(path, data))) {
+      const reservation = await this.reserveChange(path, data);
+      if (!reservation.repeating) {
         this.sendLog(`${path} change detected`);
-        await this.dispatchToHub(this, this.toGlobalPath(path), data);
+        try {
+          await this.dispatchToHub(this, this.toGlobalPath(path), data);
+          reservation.commit();
+        } catch (error) {
+          reservation.rollback();
+          throw error;
+        }
       }
       // else {
       //     this.sendLog(`${path} change repeating detected`);
@@ -250,9 +275,16 @@ export class PeerStorage extends Peer {
     }
     await scheduleOnceIfDuplicated(pathSrc, async () => {
       await delay(250);
-      if (!(await this.isRepeating(path, false))) {
+      const reservation = await this.reserveChange(path, false);
+      if (!reservation.repeating) {
         this.sendLog(`${path} delete detected`);
-        await this.dispatchToHub(this, this.toGlobalPath(path), false);
+        try {
+          await this.dispatchToHub(this, this.toGlobalPath(path), false);
+          reservation.commit();
+        } catch (error) {
+          reservation.rollback();
+          throw error;
+        }
       }
     });
   }

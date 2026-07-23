@@ -169,6 +169,68 @@ describe("PeerStorage", () => {
     }
   });
 
+  it("retries the same destination write after its processor fails once", async () => {
+    const root = await mkdtemp(path.join(tmpdir(), "livesync-bridge-"));
+    try {
+      const baseDir = path.join(root, "vault");
+      const marker = path.join(root, "processor-attempted");
+      await mkdir(baseDir);
+      const conf: PeerStorageConf = {
+        type: "storage",
+        name: "test-storage",
+        baseDir,
+        processor: {
+          cmd: process.execPath,
+          args: [
+            "-e",
+            "import { existsSync, writeFileSync } from 'node:fs'; const marker = process.argv[1]; if (!existsSync(marker)) { writeFileSync(marker, 'failed once'); process.exit(1); }",
+            marker,
+          ],
+        },
+      };
+      const peer = new PeerStorage(conf, async () => {});
+      const data = textData("retry me");
+
+      await expect(peer.put("notes/retry.md", data)).resolves.toBe(false);
+      await expect(peer.put("notes/retry.md", data)).resolves.toBe(true);
+      await expect(
+        readFile(path.join(baseDir, "notes/retry.md"), "utf8"),
+      ).resolves.toBe("retry me");
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  it("retries the same destination delete after its processor fails once", async () => {
+    const root = await mkdtemp(path.join(tmpdir(), "livesync-bridge-"));
+    try {
+      const baseDir = path.join(root, "vault");
+      const marker = path.join(root, "processor-attempted");
+      await mkdir(baseDir);
+      await writeFile(path.join(baseDir, "retry.md"), "delete me");
+      const conf: PeerStorageConf = {
+        type: "storage",
+        name: "test-storage",
+        baseDir,
+        processor: {
+          cmd: process.execPath,
+          args: [
+            "-e",
+            "import { existsSync, writeFileSync } from 'node:fs'; const marker = process.argv[1]; if (!existsSync(marker)) { writeFileSync(marker, 'failed once'); process.exit(1); }",
+            marker,
+          ],
+        },
+      };
+      const peer = new PeerStorage(conf, async () => {});
+
+      await expect(peer.delete("retry.md")).resolves.toBe(false);
+      await expect(peer.delete("retry.md")).resolves.toBe(true);
+      await expect(readFile(path.join(baseDir, "retry.md"))).rejects.toThrow();
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
   it("scans offline changed files before watching", async () => {
     const root = await mkdtemp(path.join(tmpdir(), "livesync-bridge-"));
     const seen: string[] = [];
