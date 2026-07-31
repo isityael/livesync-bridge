@@ -30,7 +30,7 @@
     "diff-match-patch": "^1.0.5",
     "fflate": "^0.8.3",
     "hash-wasm": "^4.12.0",
-    "markdown-it": "^14.3.0",
+    "markdown-it": "^15.0.0",
     "minimatch": "^10.2.6",
     "octagonal-wheels": "^0.1.51",
     "pouchdb-adapter-http": "^9.0.0",
