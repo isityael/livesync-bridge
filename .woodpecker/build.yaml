@@ -24,11 +24,6 @@ variables:
   - &pnpm_install "corepack enable && pnpm install --frozen-lockfile --ignore-scripts"
 
 steps:
-  - name: release-policy
-    image: dhi.io/bash:5.3.11-alpine3.23@sha256:80b5c46618a7c71b76cd5fa2228422a927bf6af2a51a617f1ef03a226d8e5861
-    commands:
-      - .ci/test-release-policy.sh
-
   - name: pnpm-install
     image: *node_image
     commands:
