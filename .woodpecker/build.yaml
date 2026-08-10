@@ -92,7 +92,7 @@ steps:
       provenance: mode=max
 
   - name: scan-candidate
-    image: dhi.io/trivy:0.71.2-alpine3.24-dev@sha256:111c2d07f6a936c6429f5bb551899cdd662917b754ae5effcdd45c447cb5b5ab
+    image: dhi.io/trivy:0.71.2-alpine3.24-dev@sha256:e44a2d81cefe9c045f522e6e170937153e17357c7b195e82fe44753bbecd243c
     when:
       - event: push
         branch: main
