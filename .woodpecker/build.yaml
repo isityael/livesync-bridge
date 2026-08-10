@@ -110,6 +110,7 @@ steps:
       - event: push
         branch: main
     environment:
+      COSIGN_EXPERIMENTAL: "1"
       COSIGN_KEY:
         from_secret: cosign_key
       COSIGN_PASSWORD:
