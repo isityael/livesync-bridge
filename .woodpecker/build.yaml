@@ -115,8 +115,13 @@ steps:
         from_secret: cosign_key
       COSIGN_PASSWORD:
         from_secret: cosign_password
+      GHCR_USERNAME:
+        from_secret: github_username
+      GHCR_TOKEN:
+        from_secret: github_token
     commands:
       - printf '%s' "$${COSIGN_KEY}" > /tmp/cosign.key
+      - printf '%s' "$${GHCR_TOKEN}" | cosign login ghcr.io -u "$${GHCR_USERNAME}" --password-stdin
       - cosign sign --key /tmp/cosign.key --yes --registry-referrers-mode=oci-1-1 "ghcr.io/isityael/livesync-bridge:candidate-$${CI_COMMIT_SHA}"
       - rm -f /tmp/cosign.key
 
