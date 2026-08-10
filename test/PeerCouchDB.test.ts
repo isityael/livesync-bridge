@@ -8,6 +8,13 @@ import type { Peer } from "../Peer.ts";
 import { installLocalStorage } from "../runtime/node_compat.ts";
 import type { PeerCouchDBConf } from "../types.ts";
 
+function inertManipulator() {
+  return {
+    ready: { promise: Promise.resolve() },
+    since: "now",
+  } as never;
+}
+
 function couchPeer(stateDir: string): PeerCouchDB {
   installLocalStorage(stateDir);
   localStorage.clear();
@@ -22,7 +29,7 @@ function couchPeer(stateDir: string): PeerCouchDB {
     passphrase: "",
     obfuscatePassphrase: "",
   };
-  return new PeerCouchDB(config, async () => {});
+  return new PeerCouchDB(config, async () => {}, undefined, inertManipulator());
 }
 
 describe("PeerCouchDB watch checkpoints", () => {
@@ -98,6 +105,7 @@ describe("PeerCouchDB watch checkpoints", () => {
             lifecycle.push(`baseline:${checkpoint}`),
           invalidateBaseline: () => lifecycle.push("baseline:invalid"),
         },
+        inertManipulator(),
       );
       peer.setSetting("remote-created", "old-database");
       peer.setSetting("since", "stale-sequence");
@@ -220,6 +228,7 @@ describe("PeerCouchDB watch checkpoints", () => {
           confirmBaseline: (checkpoint: string) => confirmed.push(checkpoint),
           invalidateBaseline: () => {},
         },
+        inertManipulator(),
       );
       peer.man = {
         ready: { promise: Promise.resolve() },
@@ -400,7 +409,12 @@ describe("PeerCouchDB watch checkpoints", () => {
         obfuscatePassphrase: "",
       };
       const hub = new Hub({ peers: [] });
-      const source = new PeerCouchDB(config, hub.dispatch.bind(hub));
+      const source = new PeerCouchDB(
+        config,
+        hub.dispatch.bind(hub),
+        undefined,
+        inertManipulator(),
+      );
       source.setSetting("remote-created", "same-database");
       source.setSetting("baseline-remote", "same-database");
       source.setSetting("since", "12");
