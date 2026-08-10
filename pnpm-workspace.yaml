@@ -4,7 +4,7 @@ allowBuilds:
   protobufjs: true
 
 overrides:
-  "nanoid@<3.3.17": 3.3.17
+  "nanoid@<3.3.17": 3.3.18
   uuid: 14.0.1
 
 minimumReleaseAgeExclude:
