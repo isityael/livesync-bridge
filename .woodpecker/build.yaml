@@ -5,6 +5,18 @@ when:
   - event: manual
   - event: push
     branch: main
+    path:
+      include:
+        - Dockerfile
+        - package.json
+        - pnpm-lock.yaml
+        - pnpm-workspace.yaml
+        - "**/*.ts"
+        - runtime/**
+        - scripts/**
+        - lib/**
+        - .woodpecker/build.yaml
+        - .ci/test-release-policy.sh
   - event: pull_request
 
 variables:
@@ -12,6 +24,11 @@ variables:
   - &pnpm_install "corepack enable && pnpm install --frozen-lockfile --ignore-scripts"
 
 steps:
+  - name: release-policy
+    image: dhi.io/bash:5.3.11-alpine3.23@sha256:80b5c46618a7c71b76cd5fa2228422a927bf6af2a51a617f1ef03a226d8e5861
+    commands:
+      - .ci/test-release-policy.sh
+
   - name: pnpm-install
     image: *node_image
     commands:
@@ -52,3 +69,75 @@ steps:
     commands:
       - *pnpm_install
       - pnpm run build
+
+  - name: build-candidate
+    image: woodpeckerci/plugin-docker-buildx:6.1.1@sha256:9a22c00b4952e405d11e66d29772edbeb1f7b24f27f71cda251ecb838e725e86
+    privileged: true
+    when:
+      - event: push
+        branch: main
+    settings:
+      registry: ghcr.io
+      repo: ghcr.io/isityael/livesync-bridge
+      dockerfile: Dockerfile
+      platforms: [linux/amd64]
+      tags:
+        - candidate-${CI_COMMIT_SHA}
+      logins:
+        - registry: ghcr.io
+          username:
+            from_secret: github_username
+          password:
+            from_secret: github_token
+        - registry: dhi.io
+          username:
+            from_secret: dhi_username
+          password:
+            from_secret: dhi_password
+      provenance: mode=max
+
+  - name: scan-candidate
+    image: dhi.io/trivy:0.71.2-alpine3.24-dev@sha256:111c2d07f6a936c6429f5bb551899cdd662917b754ae5effcdd45c447cb5b5ab
+    when:
+      - event: push
+        branch: main
+    environment:
+      TRIVY_USERNAME:
+        from_secret: github_username
+      TRIVY_PASSWORD:
+        from_secret: github_token
+    commands:
+      - trivy image --exit-code 1 --severity HIGH,CRITICAL --ignore-unfixed "ghcr.io/isityael/livesync-bridge:candidate-$${CI_COMMIT_SHA}"
+
+  - name: sign-candidate
+    image: dhi.io/cosign:3.1.2-alpine3.24-dev@sha256:28bd97f1efc751593b4d75d4d92880353bf77ee43f8db391f704b699b7cce43e
+    when:
+      - event: push
+        branch: main
+    environment:
+      COSIGN_KEY:
+        from_secret: cosign_key
+      COSIGN_PASSWORD:
+        from_secret: cosign_password
+    commands:
+      - printf '%s' "$${COSIGN_KEY}" > /tmp/cosign.key
+      - cosign sign --key /tmp/cosign.key --yes --registry-referrers-mode=oci-1-1 "ghcr.io/isityael/livesync-bridge:candidate-$${CI_COMMIT_SHA}"
+      - rm -f /tmp/cosign.key
+
+  - name: promote-release
+    image: dhi.io/crane:0.21.7-debian13-dev@sha256:5c8e6a602d0c668812c6645de88af5b1d69c1a1faa4b05facecd6678371f38b7
+    when:
+      - event: push
+        branch: main
+    environment:
+      GHCR_USERNAME:
+        from_secret: github_username
+      GHCR_TOKEN:
+        from_secret: github_token
+    commands:
+      - printf '%s' "$${GHCR_TOKEN}" | crane auth login ghcr.io -u "$${GHCR_USERNAME}" --password-stdin
+      - candidate="ghcr.io/isityael/livesync-bridge:candidate-$${CI_COMMIT_SHA}"
+      - short_sha="$$(printf '%s' "$${CI_COMMIT_SHA}" | cut -c1-8)"
+      - crane copy "$${candidate}" "ghcr.io/isityael/livesync-bridge:sha-$${CI_COMMIT_SHA}"
+      - crane copy "$${candidate}" "ghcr.io/isityael/livesync-bridge:sha-$${short_sha}"
+      - crane copy "$${candidate}" ghcr.io/isityael/livesync-bridge:latest
