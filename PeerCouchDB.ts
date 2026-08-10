@@ -43,10 +43,11 @@ export class PeerCouchDB extends Peer {
     conf: PeerCouchDBConf,
     dispatcher: DispatchFun,
     runtime?: PeerRuntimeHooks,
+    manipulator?: DurableDirectFileManipulator,
   ) {
     super(conf, dispatcher);
     this.runtime = runtime;
-    this.man = new DurableDirectFileManipulator(conf);
+    this.man = manipulator ?? new DurableDirectFileManipulator(conf);
     // Fetch remote since.
     this.man.since = this.getSetting("since") || "now";
   }
