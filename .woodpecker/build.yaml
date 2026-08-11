@@ -16,6 +16,8 @@ when:
         - scripts/**
         - lib/**
         - .woodpecker/build.yaml
+        - .forgejo/workflows/release-tag.yaml
+        - hack/wait-for-woodpecker-success.sh
         - .ci/test-release-policy.sh
   - event: pull_request
   - event: tag
