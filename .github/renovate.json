@@ -30,6 +30,7 @@
       "matchManagers": ["npm"],
       "matchUpdateTypes": ["patch", "minor"],
       "minimumReleaseAge": "2 days",
+      "internalChecksFilter": "strict",
       "automerge": true
     }
   ]
