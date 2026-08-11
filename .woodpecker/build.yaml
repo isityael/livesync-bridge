@@ -30,8 +30,8 @@ steps:
     image: plugins/cache:1.10@sha256:6a5cf9cf3813e9b5a554f56dbc9c073cb24463b7bddd5b10e25790d732e68938
     failure: ignore
     settings:
-      access_key: {from_secret: garage_s3_access_key}
-      secret_key: {from_secret: garage_s3_secret_key}
+      access_key: { from_secret: garage_s3_access_key }
+      secret_key: { from_secret: garage_s3_secret_key }
       restore: true
       backend: s3
       endpoint: http://garage.garage.svc.cluster.local:3900
@@ -96,7 +96,7 @@ steps:
       tags:
         - candidate-${CI_COMMIT_SHA}
       cache_from: 'type=registry\,ref=ghcr.io/isityael/livesync-bridge:buildcache'
-      cache_to: 'type=registry,ref=ghcr.io/isityael/livesync-bridge:buildcache,mode=max,ignore-error=true'
+      cache_to: "type=registry,ref=ghcr.io/isityael/livesync-bridge:buildcache,mode=max,ignore-error=true"
       logins:
         - registry: ghcr.io
           username:
@@ -168,8 +168,8 @@ steps:
         branch: main
       - event: tag
     settings:
-      access_key: {from_secret: garage_s3_access_key}
-      secret_key: {from_secret: garage_s3_secret_key}
+      access_key: { from_secret: garage_s3_access_key }
+      secret_key: { from_secret: garage_s3_secret_key }
       rebuild: true
       backend: s3
       endpoint: http://garage.garage.svc.cluster.local:3900
