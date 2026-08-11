@@ -29,7 +29,7 @@
       "description": "Auto-merge Node package patch and minor updates — low blast radius",
       "matchManagers": ["npm"],
       "matchUpdateTypes": ["patch", "minor"],
-      "minimumReleaseAge": "1 day",
+      "minimumReleaseAge": "2 days",
       "automerge": true
     }
   ]
