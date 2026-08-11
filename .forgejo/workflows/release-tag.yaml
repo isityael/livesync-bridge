@@ -3,6 +3,18 @@ name: Create gated fork release tag
 on:
   push:
     branches: [main]
+    paths:
+      - .forgejo/workflows/release-tag.yaml
+      - hack/wait-for-woodpecker-success.sh
+      - Dockerfile
+      - package.json
+      - pnpm-lock.yaml
+      - pnpm-workspace.yaml
+      - "**/*.ts"
+      - runtime/**
+      - scripts/**
+      - lib/**
+      - .woodpecker/build.yaml
   workflow_dispatch:
 
 jobs:
