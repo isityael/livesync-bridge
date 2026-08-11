@@ -18,12 +18,30 @@ when:
         - .woodpecker/build.yaml
         - .ci/test-release-policy.sh
   - event: pull_request
+  - event: tag
+    ref: refs/tags/v*-ym.*
 
 variables:
   - &node_image "dhi.io/node:26.7.0-alpine3.24-dev@sha256:1ed5bee8f37bcf640b4487a04c45f4adb411d40d36909a2a4439afce47dc5566"
-  - &pnpm_install "corepack enable && pnpm install --frozen-lockfile --ignore-scripts"
+  - &pnpm_install "corepack enable && pnpm config set store-dir $CI_WORKSPACE/.pnpm-store && pnpm install --frozen-lockfile --ignore-scripts"
 
 steps:
+  - name: restore-pnpm-cache
+    image: plugins/cache:1.10@sha256:6a5cf9cf3813e9b5a554f56dbc9c073cb24463b7bddd5b10e25790d732e68938
+    failure: ignore
+    settings:
+      access_key: {from_secret: garage_s3_access_key}
+      secret_key: {from_secret: garage_s3_secret_key}
+      restore: true
+      backend: s3
+      endpoint: http://garage.garage.svc.cluster.local:3900
+      bucket: buildkit-cache
+      region: garage
+      path_style: true
+      archive_format: zstd
+      cache_key: 'woodpecker/livesync-bridge/pnpm/amd64/node26-{{ checksum "pnpm-lock.yaml" }}'
+      mount: [.pnpm-store]
+
   - name: pnpm-install
     image: *node_image
     commands:
@@ -69,8 +87,7 @@ steps:
     image: woodpeckerci/plugin-docker-buildx:6.1.1@sha256:9a22c00b4952e405d11e66d29772edbeb1f7b24f27f71cda251ecb838e725e86
     privileged: true
     when:
-      - event: push
-        branch: main
+      - event: tag
     settings:
       registry: ghcr.io
       repo: ghcr.io/isityael/livesync-bridge
@@ -78,6 +95,8 @@ steps:
       platforms: [linux/amd64]
       tags:
         - candidate-${CI_COMMIT_SHA}
+      cache_from: 'type=registry\,ref=ghcr.io/isityael/livesync-bridge:buildcache'
+      cache_to: 'type=registry,ref=ghcr.io/isityael/livesync-bridge:buildcache,mode=max,ignore-error=true'
       logins:
         - registry: ghcr.io
           username:
@@ -94,8 +113,7 @@ steps:
   - name: scan-candidate
     image: dhi.io/trivy:0.71.2-alpine3.24-dev@sha256:e44a2d81cefe9c045f522e6e170937153e17357c7b195e82fe44753bbecd243c
     when:
-      - event: push
-        branch: main
+      - event: tag
     environment:
       TRIVY_USERNAME:
         from_secret: github_username
@@ -107,8 +125,7 @@ steps:
   - name: sign-candidate
     image: dhi.io/cosign:3.1.3-alpine3.24-dev@sha256:9e7f2b4de15f724063a4f01e1a97218a2a5f3c5654098156743b21fdc0e49e35
     when:
-      - event: push
-        branch: main
+      - event: tag
     environment:
       COSIGN_EXPERIMENTAL: "1"
       COSIGN_KEY:
@@ -128,8 +145,7 @@ steps:
   - name: promote-release
     image: dhi.io/crane:0.21.9-debian13-dev@sha256:50f7ad7f3864faee4424b49fde533a9eb8e6661101a3af108303072a0ad4ad3a
     when:
-      - event: push
-        branch: main
+      - event: tag
     environment:
       GHCR_USERNAME:
         from_secret: github_username
@@ -141,4 +157,25 @@ steps:
       - short_sha="$$(printf '%s' "$${CI_COMMIT_SHA}" | cut -c1-8)"
       - crane copy "$${candidate}" "ghcr.io/isityael/livesync-bridge:sha-$${CI_COMMIT_SHA}"
       - crane copy "$${candidate}" "ghcr.io/isityael/livesync-bridge:sha-$${short_sha}"
+      - crane copy "$${candidate}" "ghcr.io/isityael/livesync-bridge:${CI_COMMIT_TAG}"
       - crane copy "$${candidate}" ghcr.io/isityael/livesync-bridge:latest
+
+  - name: rebuild-pnpm-cache
+    image: plugins/cache:1.10@sha256:6a5cf9cf3813e9b5a554f56dbc9c073cb24463b7bddd5b10e25790d732e68938
+    failure: ignore
+    when:
+      - event: push
+        branch: main
+      - event: tag
+    settings:
+      access_key: {from_secret: garage_s3_access_key}
+      secret_key: {from_secret: garage_s3_secret_key}
+      rebuild: true
+      backend: s3
+      endpoint: http://garage.garage.svc.cluster.local:3900
+      bucket: buildkit-cache
+      region: garage
+      path_style: true
+      archive_format: zstd
+      cache_key: 'woodpecker/livesync-bridge/pnpm/amd64/node26-{{ checksum "pnpm-lock.yaml" }}'
+      mount: [.pnpm-store]

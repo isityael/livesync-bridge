@@ -1,0 +1,36 @@
+name: Create gated fork release tag
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Create immutable release tag
+        env:
+          FORGEJO_API_URL: ${{ github.server_url }}/api/v1
+          FORGEJO_REPOSITORY: ${{ github.repository }}
+          FORGEJO_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          hack/wait-for-woodpecker-success.sh "${GITHUB_SHA}" ci/woodpecker/push/build
+          version="$(jq -r .version package.json)"
+          series="v${version}-ym"
+          max=0
+          for tag in $(git tag --list "${series}.*"); do
+            revision="${tag#${series}.}"
+            case "$revision" in *[!0-9]*|'') continue;; esac
+            [ "$revision" -le "$max" ] || max="$revision"
+            [ "$(git rev-list -n1 "$tag")" != "$GITHUB_SHA" ] || exit 0
+          done
+          tag="${series}.$((max+1))"
+          curl --fail --silent --show-error --request POST \
+            --header "Authorization: token ${FORGEJO_TOKEN}" --header 'Content-Type: application/json' \
+            --data "{\"tag_name\":\"${tag}\",\"target\":\"${GITHUB_SHA}\"}" \
+            "${FORGEJO_API_URL}/repos/${FORGEJO_REPOSITORY}/tags"
