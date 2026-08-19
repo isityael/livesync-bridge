@@ -113,7 +113,7 @@ steps:
       provenance: mode=max
 
   - name: scan-candidate
-    image: dhi.io/trivy:0.73.0-alpine3.24-dev@sha256:6d2de5a8560d466d5f46717be6bd4aaab0e85864bc8f0d57e5be72b55dae1970
+    image: dhi.io/trivy:0.74.0-alpine3.24-dev@sha256:4e6b8ec8431af734452df7c871fcc03fe5bb37b06d4ecd0f4fbc18b8d3be94c9
     when:
       - event: tag
     environment:
