@@ -5,7 +5,7 @@ allowBuilds:
 
 overrides:
   "nanoid@<3.3.17": 6.0.1
-  uuid: 14.0.1
+  uuid: 14.0.2
 
 minimumReleaseAgeExclude:
   - "@typescript-eslint/eslint-plugin@8.61.2-alpha.5"
