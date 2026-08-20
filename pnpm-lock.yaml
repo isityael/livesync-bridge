@@ -6,7 +6,7 @@ settings:
 
 overrides:
   nanoid@<3.3.17: 6.0.1
-  uuid: 14.0.1
+  uuid: 14.0.2
 
 importers:
 
@@ -1562,8 +1562,8 @@ packages:
   util-deprecate@1.0.2:
     resolution: {integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==}
 
-  uuid@14.0.1:
-    resolution: {integrity: sha512-6ZxzVpzDXDa3bJWaHilVayA+BH/1zmxCJoVgvmqJnid/gPoKHxUrS/aC/T6LGQtNHT+XHG9fXPJB4d+IrU30Ew==}
+  uuid@14.0.2:
+    resolution: {integrity: sha512-xZe/16rV4aa+HGSOCiY2YeLT1OybRLrrkL/Rqaq7p7GMVXjFh+6wN4oMYgjFmnSnhY8t6Xpdl2l9qmnHYuMHwQ==}
     hasBin: true
 
   vite@8.2.1:
@@ -2904,7 +2904,7 @@ snapshots:
       pouchdb-fetch: 9.0.0
       pouchdb-merge: 9.0.0
       pouchdb-utils: 9.0.0
-      uuid: 14.0.1
+      uuid: 14.0.2
     transitivePeerDependencies:
       - encoding
 
@@ -2975,7 +2975,7 @@ snapshots:
     dependencies:
       pouchdb-errors: 9.0.0
       pouchdb-md5: 9.0.0
-      uuid: 14.0.1
+      uuid: 14.0.2
 
   pouchdb-wrappers@5.0.0: {}
 
@@ -3164,7 +3164,7 @@ snapshots:
 
   util-deprecate@1.0.2: {}
 
-  uuid@14.0.1: {}
+  uuid@14.0.2: {}
 
   vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2):
     dependencies:
