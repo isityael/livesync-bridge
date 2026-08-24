@@ -24,7 +24,7 @@ when:
     ref: refs/tags/v*-ym.*
 
 variables:
-  - &node_image "dhi.io/node:26.7.0-alpine3.24-dev@sha256:763d0f58436281ce84f6f95b8a7a318f74cd8c9d1cef61212efeffe2de445130"
+  - &node_image "dhi.io/node:26.7.0-alpine3.24-dev@sha256:b6045b1e4dce4d1757211da1926ad47e1fc272fe15c454923a6d9d9746274575"
   - &pnpm_install "corepack enable && pnpm config set store-dir $CI_WORKSPACE/.pnpm-store && pnpm install --frozen-lockfile --ignore-scripts"
 
 steps:
@@ -113,7 +113,7 @@ steps:
       provenance: mode=max
 
   - name: scan-candidate
-    image: dhi.io/trivy:0.74.0-alpine3.24-dev@sha256:9184af6db53896c118985a308b2232e07f9c246145984dbfe06e4097400f36c6
+    image: dhi.io/trivy:0.74.0-alpine3.24-dev@sha256:7e1173e976c07f3489a1897f9b227c94b477f5303b4ffc8ba43a99c27cfd16a9
     when:
       - event: tag
     environment:
@@ -125,7 +125,7 @@ steps:
       - trivy image --exit-code 1 --severity HIGH,CRITICAL --ignore-unfixed "ghcr.io/isityael/livesync-bridge:candidate-$${CI_COMMIT_SHA}"
 
   - name: sign-candidate
-    image: dhi.io/cosign:3.1.3-alpine3.24-dev@sha256:ad40a6c94e2972c0a0f760e1fc66bfaf914f4480607d1593009ff1dae1311a3d
+    image: dhi.io/cosign:3.1.3-alpine3.24-dev@sha256:656a211601ce9f746766b6dab95b2dc7546e1e00f04a2f43442e353bd916e98c
     when:
       - event: tag
     environment:
