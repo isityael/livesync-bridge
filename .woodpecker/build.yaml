@@ -24,12 +24,12 @@ when:
     ref: refs/tags/v*-ym.*
 
 variables:
-  - &node_image "dhi.io/node:26.8.1-alpine3.24-dev@sha256:a771e777b3005a3ebeec6c08c002b053f39bb981604c1584bd580237e7e011de"
+  - &node_image "dhi.io/node:26.8.1-alpine3.24-dev@sha256:568938d6b7b45704a4bd6b86604bbd3363623d7505875449ba431bb7cd6f0796"
   - &pnpm_install "corepack enable && pnpm config set store-dir $CI_WORKSPACE/.pnpm-store && pnpm install --frozen-lockfile --ignore-scripts"
 
 steps:
   - name: restore-pnpm-cache
-    image: plugins/cache:1.10@sha256:1ff8584ff4e1d245fbb5e19350901c8f995cf2f32f2618f687445e8535003121
+    image: plugins/cache:1.10@sha256:d7fc21469c57b60320157831fc4703d4f1a4bc3c6b136129cf47f19e60570353
     failure: ignore
     settings:
       access_key: { from_secret: garage_s3_access_key }
@@ -113,7 +113,7 @@ steps:
       provenance: mode=max
 
   - name: scan-candidate
-    image: dhi.io/trivy:0.74.0-alpine3.24-dev@sha256:608245bee20ddbdb2d67d792ada69bbf37120782d397fc5f88efdf0d347d409c
+    image: dhi.io/trivy:0.74.0-alpine3.24-dev@sha256:9e4e596bbc1cddfad32111efe671336836373665e0a47c79f136ba4b951783e2
     when:
       - event: tag
     environment:
@@ -125,7 +125,7 @@ steps:
       - trivy image --exit-code 1 --severity HIGH,CRITICAL --ignore-unfixed "ghcr.io/isityael/livesync-bridge:candidate-$${CI_COMMIT_SHA}"
 
   - name: sign-candidate
-    image: dhi.io/cosign:3.1.3-alpine3.24-dev@sha256:ce8c798a69baf4af447461f4950d2f487a2682cb4bdb03f78427ded2581ae511
+    image: dhi.io/cosign:3.1.3-alpine3.24-dev@sha256:bf944c4688d7cd6e036a8bb8bfdc9880c9160e5d6a1909671005286c05ac64ea
     when:
       - event: tag
     environment:
@@ -145,7 +145,7 @@ steps:
       - rm -f /tmp/cosign.key
 
   - name: promote-release
-    image: dhi.io/crane:0.21.9-debian13-dev@sha256:a59868f1520dbb3c83c59ca82320ed0c0bce72730802c427b70c420b60777c99
+    image: dhi.io/crane:0.21.9-debian13-dev@sha256:4560752f8bfc04086c6daa84ac48656b6e5c81d33903c3d8a1cddef2e2f98144
     when:
       - event: tag
     environment:
@@ -163,7 +163,7 @@ steps:
       - crane copy "$${candidate}" ghcr.io/isityael/livesync-bridge:latest
 
   - name: rebuild-pnpm-cache
-    image: plugins/cache:1.10@sha256:1ff8584ff4e1d245fbb5e19350901c8f995cf2f32f2618f687445e8535003121
+    image: plugins/cache:1.10@sha256:d7fc21469c57b60320157831fc4703d4f1a4bc3c6b136129cf47f19e60570353
     failure: ignore
     when:
       - event: push
