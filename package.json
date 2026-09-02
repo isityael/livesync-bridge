@@ -58,7 +58,7 @@
     "globals": "^17.11.0",
     "prettier": "4.0.0-alpha.13",
     "typescript": "7.0.2",
-    "typescript-eslint": "8.68.0",
+    "typescript-eslint": "8.69.0",
     "typescript-eslint-compiler": "npm:typescript@6.0.3",
     "vitest": "5.0.0-rc.4"
   }
