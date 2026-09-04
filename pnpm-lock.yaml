@@ -134,8 +134,8 @@ importers:
         specifier: npm:typescript@6.0.3
         version: typescript@6.0.3
       vitest:
-        specifier: 5.0.0-rc.4
-        version: 5.0.0-rc.4(@types/node@26.4.0)(vite@8.2.2(@types/node@26.4.0)(esbuild@0.28.2))
+        specifier: 5.0.0
+        version: 5.0.0(@types/node@26.4.0)(vite@8.2.2(@types/node@26.4.0)(esbuild@0.28.2))
 
 packages:
 
@@ -564,6 +564,7 @@ packages:
   '@smithy/node-http-handler@4.12.0':
     resolution: {integrity: sha512-0mq1pHadfyXCYCqm2cNpbjNIT+fbaUpNxewZb/YNr2L0IrEVMOb8gM/Fl4K6XvHCW3uSNDFwPl/+iKm0bx9jYg==}
     engines: {node: '>=18.0.0'}
+    deprecated: Depreacted due to a memory leak issue https://github.com/smithy-lang/smithy-typescript/issues/2258
 
   '@smithy/signature-v4@5.7.3':
     resolution: {integrity: sha512-7ImGm+FkHRLcBaRttIAMZ6bzJZWb2cJGoYjq46F2UjycujWzrL9GEN9h4w7eQyXJYnltrUhxbbieBAIRrdqpow==}
@@ -846,8 +847,8 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@vitest/mocker@5.0.0-rc.4':
-    resolution: {integrity: sha512-8DLV37U8yxj9p7bXuRq5e60FvU9znAv4wrb2dP0+ElP53mZjAu5ZtwRCbqEVAoLcs7zSTHHXuNUQAuS+RWblCQ==}
+  '@vitest/mocker@5.0.0':
+    resolution: {integrity: sha512-66PGTMIiVJP3t4a5yxU9qPtf7MdTBs8jmToMvy+HVflB3Yy13WJZTtPePdvU+wjRV02SKK5doLbSA6o9pwOmiA==}
     peerDependencies:
       msw: ^2.4.9
       vite: ^6.0.0 || ^7.0.0 || ^8.0.0
@@ -857,8 +858,8 @@ packages:
       vite:
         optional: true
 
-  '@vitest/spy@5.0.0-rc.4':
-    resolution: {integrity: sha512-Fti74i6fwpyXyAKOCfxA1KwGtIIEQlsHkaQj/jgO4GkeQDaXoACuqp2UdUn3B40L8C5L6nqk/rAI8n9js4u2VQ==}
+  '@vitest/spy@5.0.0':
+    resolution: {integrity: sha512-uy+luWBAPw9XfthoHi5AkfHUnuPYEESjl0p/r+meoBnU8bxg5GDQ3Ey8MjcJ6sqahkL4PFyrvfMJJBw7LbU06g==}
 
   abstract-leveldown@2.7.2:
     resolution: {integrity: sha512-+OVvxH2rHVEhWLdbudP6p0+dNMXu8JA1CbhP19T8paTYAcX7oJ4OVjT+ZUVpv7mITxXHqDMej+GdqXBmXkw09w==}
@@ -1615,20 +1616,20 @@ packages:
       yaml:
         optional: true
 
-  vitest@5.0.0-rc.4:
-    resolution: {integrity: sha512-Yd2zKNMlZ0k1iy4ar3DorcOJ+fLJmbMoawONMQwhIVRWnbbAURVWhQDk1s1eTp0Am7ZdZhk4nwu2m0IBRl5Dtw==}
+  vitest@5.0.0:
+    resolution: {integrity: sha512-gpsMNoRhMjMktVxPtstOH4/PJuPyovVaMDr4oDilXaGH1EcqM2OE96SoHT2VIQ6fTGtTjqmHDrEu2X9RQiXf8Q==}
     engines: {node: ^22.12.0 || ^24.0.0 || >=26.0.0}
     hasBin: true
     peerDependencies:
       '@edge-runtime/vm': '*'
       '@opentelemetry/api': ^1.9.0
       '@types/node': ^22.0.0 || >=24.0.0
-      '@vitest/browser-playwright': 5.0.0-rc.4
-      '@vitest/browser-preview': 5.0.0-rc.4
+      '@vitest/browser-playwright': 5.0.0
+      '@vitest/browser-preview': 5.0.0
       '@vitest/browser-webdriverio': ^5.0.0-beta.5 || >=5.0.0
-      '@vitest/coverage-istanbul': 5.0.0-rc.4
-      '@vitest/coverage-v8': 5.0.0-rc.4
-      '@vitest/ui': 5.0.0-rc.4
+      '@vitest/coverage-istanbul': 5.0.0
+      '@vitest/coverage-v8': 5.0.0
+      '@vitest/ui': 5.0.0
       happy-dom: '*'
       jsdom: '*'
       vite: ^6.4.0 || ^7.0.0 || ^8.0.0
@@ -2376,16 +2377,16 @@ snapshots:
   '@typescript/typescript-win32-x64@7.0.2':
     optional: true
 
-  '@vitest/mocker@5.0.0-rc.4(vite@8.2.2(@types/node@26.4.0)(esbuild@0.28.2))':
+  '@vitest/mocker@5.0.0(vite@8.2.2(@types/node@26.4.0)(esbuild@0.28.2))':
     dependencies:
       '@jridgewell/trace-mapping': 0.3.31
-      '@vitest/spy': 5.0.0-rc.4
+      '@vitest/spy': 5.0.0
       estree-walker: 3.0.3
       magic-string: 1.2.3
     optionalDependencies:
       vite: 8.2.2(@types/node@26.4.0)(esbuild@0.28.2)
 
-  '@vitest/spy@5.0.0-rc.4': {}
+  '@vitest/spy@5.0.0': {}
 
   abstract-leveldown@2.7.2:
     dependencies:
@@ -3188,10 +3189,10 @@ snapshots:
       esbuild: 0.28.2
       fsevents: 2.3.3
 
-  vitest@5.0.0-rc.4(@types/node@26.4.0)(vite@8.2.2(@types/node@26.4.0)(esbuild@0.28.2)):
+  vitest@5.0.0(@types/node@26.4.0)(vite@8.2.2(@types/node@26.4.0)(esbuild@0.28.2)):
     dependencies:
       '@types/chai': 5.2.3
-      '@vitest/mocker': 5.0.0-rc.4(vite@8.2.2(@types/node@26.4.0)(esbuild@0.28.2))
+      '@vitest/mocker': 5.0.0(vite@8.2.2(@types/node@26.4.0)(esbuild@0.28.2))
       chai: 6.2.2
       es-module-lexer: 2.3.2
       expect-type: 1.4.0
