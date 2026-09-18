@@ -24,7 +24,7 @@ when:
     ref: refs/tags/v*-ym.*
 
 variables:
-  - &node_image "dhi.io/node:26.8.2-alpine3.24-dev@sha256:cea4c075ea20a9db7794cee6cea8e7f33f876e94cfe892503faa2b3f910b06f1"
+  - &node_image "dhi.io/node:26.9.0-alpine3.24-dev@sha256:4624b0b43de9b1808717acf82eb3d19f854dbfd15729fdc7f37273e694672873"
   - &pnpm_install "corepack enable && pnpm config set store-dir $CI_WORKSPACE/.pnpm-store && pnpm install --frozen-lockfile --ignore-scripts"
 
 steps:
