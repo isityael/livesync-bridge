@@ -29,7 +29,7 @@ variables:
 
 steps:
   - name: restore-pnpm-cache
-    image: plugins/cache:1.10@sha256:d7fc21469c57b60320157831fc4703d4f1a4bc3c6b136129cf47f19e60570353
+    image: plugins/cache:1.10@sha256:f108c65d14edfba45f4c75fd606d4bf5886babc38ffdd6183a599234004edfc0
     failure: ignore
     settings:
       access_key: { from_secret: garage_s3_access_key }
@@ -113,7 +113,7 @@ steps:
       provenance: mode=max
 
   - name: scan-candidate
-    image: dhi.io/trivy:0.74.0-alpine3.24-dev@sha256:65f4193e6e3908dfb2577d258358bb4ef14736425406e657382224d07b0e1d0d
+    image: dhi.io/trivy:0.74.0-alpine3.24-dev@sha256:c0fe6badae7fa331254b3ea3b53ea1e74e7067ce5aa63f6f05e40538963d97b6
     when:
       - event: tag
     environment:
@@ -125,7 +125,7 @@ steps:
       - trivy image --exit-code 1 --severity HIGH,CRITICAL --ignore-unfixed "ghcr.io/isityael/livesync-bridge:candidate-$${CI_COMMIT_SHA}"
 
   - name: sign-candidate
-    image: dhi.io/cosign:3.1.3-alpine3.24-dev@sha256:c521b07a37c61b63072173270389614ea11c59c965c359bf756499157ae1db35
+    image: dhi.io/cosign:3.1.3-alpine3.24-dev@sha256:d1294edca078fe8bb6436229fbccdbb7f7a53ba003743aa0a17f87ff1bcea302
     when:
       - event: tag
     environment:
@@ -145,7 +145,7 @@ steps:
       - rm -f /tmp/cosign.key
 
   - name: promote-release
-    image: dhi.io/crane:0.21.9-debian13-dev@sha256:8e4fafa106b0f5ff91ab11d6f2af322dcf6f104e1f2335c3fe1ac73e27e60a35
+    image: dhi.io/crane:0.21.9-debian13-dev@sha256:61aaf478274f939149ffdb4d69d34b78d04022924e131a2f915ab258dd1969c3
     when:
       - event: tag
     environment:
@@ -163,7 +163,7 @@ steps:
       - crane copy "$${candidate}" ghcr.io/isityael/livesync-bridge:latest
 
   - name: rebuild-pnpm-cache
-    image: plugins/cache:1.10@sha256:d7fc21469c57b60320157831fc4703d4f1a4bc3c6b136129cf47f19e60570353
+    image: plugins/cache:1.10@sha256:f108c65d14edfba45f4c75fd606d4bf5886babc38ffdd6183a599234004edfc0
     failure: ignore
     when:
       - event: push
