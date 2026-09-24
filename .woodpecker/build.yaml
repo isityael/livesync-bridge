@@ -29,7 +29,7 @@ variables:
 
 steps:
   - name: restore-pnpm-cache
-    image: plugins/cache:1.10@sha256:fa8180c3ba7455577e00207d2d61e321be78987252c52c7d96437c8f3d14c911
+    image: plugins/cache:1.10@sha256:45737fa6c8e3bfc20c9575af8fe474ad9c78f7432a778793876761c53bf9081d
     failure: ignore
     settings:
       access_key: { from_secret: garage_s3_access_key }
@@ -145,7 +145,7 @@ steps:
       - rm -f /tmp/cosign.key
 
   - name: promote-release
-    image: dhi.io/crane:0.21.9-debian13-dev@sha256:60f3b742577596e65c1eae76ba9a9a7d5900802e984e8f1ebaadb080c3e00778
+    image: dhi.io/crane:0.21.9-debian13-dev@sha256:3fb565e1e3aef17a5f7bf9bb697e88cdad502f94b775f8998db7ac94ee164994
     when:
       - event: tag
     environment:
@@ -163,7 +163,7 @@ steps:
       - crane copy "$${candidate}" ghcr.io/isityael/livesync-bridge:latest
 
   - name: rebuild-pnpm-cache
-    image: plugins/cache:1.10@sha256:fa8180c3ba7455577e00207d2d61e321be78987252c52c7d96437c8f3d14c911
+    image: plugins/cache:1.10@sha256:45737fa6c8e3bfc20c9575af8fe474ad9c78f7432a778793876761c53bf9081d
     failure: ignore
     when:
       - event: push
