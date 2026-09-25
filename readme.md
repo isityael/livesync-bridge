@@ -23,7 +23,7 @@ Of course, it is multi-directional!
 
 ## Prerequisites
 
-- [Node.js 26](https://nodejs.org/) and PNPM 11 via Corepack are required.
+- [Node.js 26](https://nodejs.org/) and PNPM 12.6.0 via Corepack are required.
 
 ## Simply run
 
