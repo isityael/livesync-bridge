@@ -7,28 +7,16 @@ when:
 
 variables:
   - &node_image "dhi.io/node:26.10.0-alpine3.24-dev@sha256:ff2c07e1681b1bcf1747b55ed54b900a327602a37975fb77487e2f795e822dfd"
-  - &pnpm_install "corepack enable && pnpm config set store-dir $CI_WORKSPACE/.pnpm-store && pnpm install --frozen-lockfile --ignore-scripts"
+  - &pnpm_install "corepack enable && pnpm config set store-dir /woodpecker/cache/livesync-bridge/pnpm-store && pnpm install --frozen-lockfile --ignore-scripts"
 
 steps:
-  - name: restore-pnpm-cache
-    image: plugins/cache:1.10@sha256:45737fa6c8e3bfc20c9575af8fe474ad9c78f7432a778793876761c53bf9081d
-    failure: ignore
-    settings:
-      access_key: { from_secret: garage_s3_access_key }
-      secret_key: { from_secret: garage_s3_secret_key }
-      restore: true
-      backend: s3
-      endpoint: http://garage.garage.svc.cluster.local:3900
-      bucket: buildkit-cache
-      region: garage
-      path_style: true
-      archive_format: zstd
-      cache_key: 'woodpecker/livesync-bridge/pnpm/amd64/node26-{{ checksum "pnpm-lock.yaml" }}'
-      mount: [.pnpm-store]
-
   # One container keeps the Corepack shim and installed workspace available to all checks.
+  # The pnpm store lives on the shared woodpecker-pipeline-cache volume; the
+  # Garage archive restore + rebuild took ~2 min, longer than the checks.
   - name: check
     image: *node_image
+    volumes:
+      - woodpecker-pipeline-cache:/woodpecker/cache
     commands:
       - *pnpm_install
       - .ci/test-release-policy.sh
@@ -116,21 +104,3 @@ steps:
       - crane copy "$${candidate}" "git.m0sh1.cc/m0sh1-internal/livesync-bridge:sha-$${short_sha}"
       - crane copy "$${candidate}" "git.m0sh1.cc/m0sh1-internal/livesync-bridge:${CI_COMMIT_TAG}"
       - crane copy "$${candidate}" git.m0sh1.cc/m0sh1-internal/livesync-bridge:latest
-
-  - name: rebuild-pnpm-cache
-    image: plugins/cache:1.10@sha256:45737fa6c8e3bfc20c9575af8fe474ad9c78f7432a778793876761c53bf9081d
-    failure: ignore
-    when:
-      - event: tag
-    settings:
-      access_key: { from_secret: garage_s3_access_key }
-      secret_key: { from_secret: garage_s3_secret_key }
-      rebuild: true
-      backend: s3
-      endpoint: http://garage.garage.svc.cluster.local:3900
-      bucket: buildkit-cache
-      region: garage
-      path_style: true
-      archive_format: zstd
-      cache_key: 'woodpecker/livesync-bridge/pnpm/amd64/node26-{{ checksum "pnpm-lock.yaml" }}'
-      mount: [.pnpm-store]
