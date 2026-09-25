@@ -1,11 +1,12 @@
 name: Create gated fork release tag
 
 on:
+  pull_request:
+    branches: [main]
   push:
     branches: [main]
     paths:
       - .forgejo/workflows/release-tag.yaml
-      - hack/wait-for-woodpecker-success.sh
       - Dockerfile
       - package.json
       - pnpm-lock.yaml
@@ -13,12 +14,41 @@ on:
       - "**/*.ts"
       - runtime/**
       - scripts/**
+      - .ci/**
+      - lib
       - lib/**
       - .woodpecker/build.yaml
   workflow_dispatch:
 
 jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '26'
+
+      - name: Install pnpm and locked dependencies
+        run: |
+          npm install --global pnpm@12.6.0
+          pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Validate application and release policy
+        run: |
+          .ci/test-release-policy.sh
+          pnpm run fmt:check
+          pnpm run lint
+          pnpm run typecheck
+          pnpm test
+          pnpm audit --audit-level=high
+
   release:
+    needs: validate
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -31,12 +61,11 @@ jobs:
           FORGEJO_TOKEN: ${{ github.token }}
         run: |
           set -eu
-          hack/wait-for-woodpecker-success.sh "${GITHUB_SHA}" ci/woodpecker/push/build
           version="$(jq -r .version package.json)"
           series="v${version}-ym"
           max=0
           for tag in $(git tag --list "${series}.*"); do
-            revision="${tag#${series}.}"
+            revision="${tag#"$series".}"
             case "$revision" in *[!0-9]*|'') continue;; esac
             [ "$revision" -le "$max" ] || max="$revision"
             [ "$(git rev-list -n1 "$tag")" != "$GITHUB_SHA" ] || exit 0

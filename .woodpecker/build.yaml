@@ -2,23 +2,6 @@
 # Release candidates pass validation, vulnerability scanning, and signing before promotion.
 when:
   - event: manual
-  - event: push
-    branch: main
-    path:
-      include:
-        - Dockerfile
-        - package.json
-        - pnpm-lock.yaml
-        - pnpm-workspace.yaml
-        - "**/*.ts"
-        - runtime/**
-        - scripts/**
-        - lib/**
-        - .woodpecker/build.yaml
-        - .forgejo/workflows/release-tag.yaml
-        - hack/wait-for-woodpecker-success.sh
-        - .ci/test-release-policy.sh
-  - event: pull_request
   - event: tag
     ref: refs/tags/v*-ym.*
 
@@ -138,8 +121,6 @@ steps:
     image: plugins/cache:1.10@sha256:45737fa6c8e3bfc20c9575af8fe474ad9c78f7432a778793876761c53bf9081d
     failure: ignore
     when:
-      - event: push
-        branch: main
       - event: tag
     settings:
       access_key: { from_secret: garage_s3_access_key }
