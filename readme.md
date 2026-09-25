@@ -23,7 +23,7 @@ Of course, it is multi-directional!
 
 ## Prerequisites
 
-- [Node.js 26](https://nodejs.org/) and PNPM 11 via Corepack are required.
+- [Node.js 26](https://nodejs.org/) and PNPM 12.6.0 via Corepack are required.
 
 ## Simply run
 
@@ -64,11 +64,17 @@ git clone --recursive https://github.com/isityael/livesync-bridge
 docker compose up -d
 ```
 
-The sole canonical container image is
-`ghcr.io/isityael/livesync-bridge`. The GitHub publication workflow blocks
-critical vulnerabilities on the immutable digest, keylessly signs that digest,
-and only then applies canonical tags. The image is built once with BuildKit
-provenance and an SBOM.
+New container releases are published privately to
+`git.m0sh1.cc/m0sh1-internal/livesync-bridge` by Woodpecker. Tag builds validate
+once, build a candidate with provenance and an SBOM, block HIGH/CRITICAL
+vulnerabilities with fixes available, and sign the candidate before promoting
+release, SHA and `latest` tags. The GitHub mirror does not publish images.
+Existing GHCR images are retained for recovery; they are not refreshed.
+
+The publisher requires Woodpecker secrets `forgejo_package_username` and
+`forgejo_package_token` with package write access to the private `m0sh1-internal`
+organization. Existing DHI and Cosign secrets remain required. Consumers must
+authenticate to Forgejo with package read access.
 
 ## Health and recovery
 

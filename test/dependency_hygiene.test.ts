@@ -1,4 +1,4 @@
-import { readFile } from "node:fs/promises";
+import { access, readFile } from "node:fs/promises";
 import { describe, expect, it } from "vitest";
 
 describe("dependency hygiene", () => {
@@ -27,18 +27,34 @@ describe("dependency hygiene", () => {
 });
 
 describe("canonical image publication", () => {
-  it("builds once by digest and applies tags only after scan and signing", async () => {
+  it("builds one private candidate and promotes only after blocking scan and signing", async () => {
     const workflow = await readFile(
-      new URL("../.github/workflows/publish-ghcr.yaml", import.meta.url),
+      new URL("../.woodpecker/build.yaml", import.meta.url),
       "utf8",
     );
-    expect(workflow.match(/uses: docker\/build-push-action/g)).toHaveLength(1);
-    expect(workflow).toContain("push-by-digest=true");
-    const scan = workflow.indexOf("Block critical vulnerabilities");
-    const sign = workflow.indexOf("Sign image (keyless)");
-    const tag = workflow.indexOf("Publish canonical tags");
+    expect(workflow.match(/name: build-candidate/g)).toHaveLength(1);
+    expect(workflow).toContain(
+      "repo: git.m0sh1.cc/m0sh1-internal/livesync-bridge",
+    );
+    expect(workflow).toContain("candidate-${CI_COMMIT_SHA}");
+    expect(workflow).toContain("from_secret: forgejo_package_token");
+    expect(workflow).not.toContain("ghcr.io");
+    expect(workflow).toContain("provenance: mode=max");
+    expect(workflow).toContain("sbom: true");
+    expect(workflow).toContain(
+      "trivy image --exit-code 1 --severity HIGH,CRITICAL",
+    );
+    const scan = workflow.indexOf("name: scan-candidate");
+    const sign = workflow.indexOf("name: sign-candidate");
+    const tag = workflow.indexOf("name: promote-release");
     expect(scan).toBeGreaterThan(0);
     expect(sign).toBeGreaterThan(scan);
     expect(tag).toBeGreaterThan(sign);
+    expect(workflow.slice(scan, tag)).not.toContain("failure: ignore");
+    await expect(
+      access(
+        new URL("../.github/workflows/publish-ghcr.yaml", import.meta.url),
+      ),
+    ).rejects.toMatchObject({ code: "ENOENT" });
   });
 });

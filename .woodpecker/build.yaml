@@ -1,6 +1,5 @@
-# LiveSync Bridge validation pipeline for isityael/livesync-bridge.
-# GHCR publication, SBOM generation, vulnerability gating, and signing are
-# canonicalized in .github/workflows/publish-ghcr.yaml.
+# Canonical LiveSync Bridge validation and private Forgejo image publication.
+# Release candidates pass validation, vulnerability scanning, and signing before promotion.
 when:
   - event: manual
   - event: push
@@ -44,46 +43,18 @@ steps:
       cache_key: 'woodpecker/livesync-bridge/pnpm/amd64/node26-{{ checksum "pnpm-lock.yaml" }}'
       mount: [.pnpm-store]
 
-  - name: pnpm-install
+  # One container keeps the Corepack shim and installed workspace available to all checks.
+  - name: check
     image: *node_image
     commands:
       - *pnpm_install
-
-  - name: fmt-check
-    image: *node_image
-    commands:
-      - *pnpm_install
+      - .ci/test-release-policy.sh
       - pnpm run fmt:check
-
-  - name: lint
-    image: *node_image
-    commands:
-      - *pnpm_install
       - pnpm run lint
-
-  - name: typecheck
-    image: *node_image
-    commands:
-      - *pnpm_install
       - pnpm run typecheck
-
-  - name: test
-    image: *node_image
-    commands:
-      - *pnpm_install
+      # pnpm test bundles the application before running Vitest.
       - pnpm test
-
-  - name: dependency-audit
-    image: *node_image
-    commands:
-      - *pnpm_install
       - pnpm audit --audit-level=high
-
-  - name: build
-    image: *node_image
-    commands:
-      - *pnpm_install
-      - pnpm run build
 
   - name: build-candidate
     image: woodpeckerci/plugin-docker-buildx:6.1.2@sha256:d26b69cbe748b8a219c707e7889d5ffb3f9214bc3c480c30fe857ff85954267c
@@ -91,26 +62,27 @@ steps:
     when:
       - event: tag
     settings:
-      registry: ghcr.io
-      repo: ghcr.io/isityael/livesync-bridge
+      registry: git.m0sh1.cc
+      repo: git.m0sh1.cc/m0sh1-internal/livesync-bridge
       dockerfile: Dockerfile
       platforms: [linux/amd64]
       tags:
         - candidate-${CI_COMMIT_SHA}
-      cache_from: 'type=registry\,ref=ghcr.io/isityael/livesync-bridge:buildcache'
-      cache_to: "type=registry,ref=ghcr.io/isityael/livesync-bridge:buildcache,mode=max,ignore-error=true"
+      cache_from: 'type=registry\,ref=git.m0sh1.cc/m0sh1-internal/livesync-bridge:buildcache'
+      cache_to: "type=registry,ref=git.m0sh1.cc/m0sh1-internal/livesync-bridge:buildcache,mode=max,ignore-error=true"
       logins:
-        - registry: ghcr.io
+        - registry: git.m0sh1.cc
           username:
-            from_secret: github_username
+            from_secret: forgejo_package_username
           password:
-            from_secret: github_token
+            from_secret: forgejo_package_token
         - registry: dhi.io
           username:
             from_secret: dhi_username
           password:
             from_secret: dhi_password
       provenance: mode=max
+      sbom: true
 
   - name: scan-candidate
     image: dhi.io/trivy:0.74.0-alpine3.24-dev@sha256:c0fe6badae7fa331254b3ea3b53ea1e74e7067ce5aa63f6f05e40538963d97b6
@@ -118,11 +90,11 @@ steps:
       - event: tag
     environment:
       TRIVY_USERNAME:
-        from_secret: github_username
+        from_secret: forgejo_package_username
       TRIVY_PASSWORD:
-        from_secret: github_token
+        from_secret: forgejo_package_token
     commands:
-      - trivy image --exit-code 1 --severity HIGH,CRITICAL --ignore-unfixed "ghcr.io/isityael/livesync-bridge:candidate-$${CI_COMMIT_SHA}"
+      - trivy image --exit-code 1 --severity HIGH,CRITICAL --ignore-unfixed "git.m0sh1.cc/m0sh1-internal/livesync-bridge:candidate-$${CI_COMMIT_SHA}"
 
   - name: sign-candidate
     image: dhi.io/cosign:3.1.3-alpine3.24-dev@sha256:e72a27089bde22daa2cc8653011ef55c4a8ecfb7cc5271df62325cd661d77eff
@@ -134,14 +106,14 @@ steps:
         from_secret: cosign_key
       COSIGN_PASSWORD:
         from_secret: cosign_password
-      GHCR_USERNAME:
-        from_secret: github_username
-      GHCR_TOKEN:
-        from_secret: github_token
+      REGISTRY_USERNAME:
+        from_secret: forgejo_package_username
+      REGISTRY_TOKEN:
+        from_secret: forgejo_package_token
     commands:
       - printf '%s' "$${COSIGN_KEY}" > /tmp/cosign.key
-      - printf '%s' "$${GHCR_TOKEN}" | cosign login ghcr.io -u "$${GHCR_USERNAME}" --password-stdin
-      - cosign sign --key /tmp/cosign.key --yes --registry-referrers-mode=oci-1-1 "ghcr.io/isityael/livesync-bridge:candidate-$${CI_COMMIT_SHA}"
+      - printf '%s' "$${REGISTRY_TOKEN}" | cosign login git.m0sh1.cc -u "$${REGISTRY_USERNAME}" --password-stdin
+      - cosign sign --key /tmp/cosign.key --yes --registry-referrers-mode=oci-1-1 "git.m0sh1.cc/m0sh1-internal/livesync-bridge:candidate-$${CI_COMMIT_SHA}"
       - rm -f /tmp/cosign.key
 
   - name: promote-release
@@ -149,18 +121,18 @@ steps:
     when:
       - event: tag
     environment:
-      GHCR_USERNAME:
-        from_secret: github_username
-      GHCR_TOKEN:
-        from_secret: github_token
+      REGISTRY_USERNAME:
+        from_secret: forgejo_package_username
+      REGISTRY_TOKEN:
+        from_secret: forgejo_package_token
     commands:
-      - printf '%s' "$${GHCR_TOKEN}" | crane auth login ghcr.io -u "$${GHCR_USERNAME}" --password-stdin
-      - candidate="ghcr.io/isityael/livesync-bridge:candidate-$${CI_COMMIT_SHA}"
+      - printf '%s' "$${REGISTRY_TOKEN}" | crane auth login git.m0sh1.cc -u "$${REGISTRY_USERNAME}" --password-stdin
+      - candidate="git.m0sh1.cc/m0sh1-internal/livesync-bridge:candidate-$${CI_COMMIT_SHA}"
       - short_sha="$$(printf '%s' "$${CI_COMMIT_SHA}" | cut -c1-8)"
-      - crane copy "$${candidate}" "ghcr.io/isityael/livesync-bridge:sha-$${CI_COMMIT_SHA}"
-      - crane copy "$${candidate}" "ghcr.io/isityael/livesync-bridge:sha-$${short_sha}"
-      - crane copy "$${candidate}" "ghcr.io/isityael/livesync-bridge:${CI_COMMIT_TAG}"
-      - crane copy "$${candidate}" ghcr.io/isityael/livesync-bridge:latest
+      - crane copy "$${candidate}" "git.m0sh1.cc/m0sh1-internal/livesync-bridge:sha-$${CI_COMMIT_SHA}"
+      - crane copy "$${candidate}" "git.m0sh1.cc/m0sh1-internal/livesync-bridge:sha-$${short_sha}"
+      - crane copy "$${candidate}" "git.m0sh1.cc/m0sh1-internal/livesync-bridge:${CI_COMMIT_TAG}"
+      - crane copy "$${candidate}" git.m0sh1.cc/m0sh1-internal/livesync-bridge:latest
 
   - name: rebuild-pnpm-cache
     image: plugins/cache:1.10@sha256:45737fa6c8e3bfc20c9575af8fe474ad9c78f7432a778793876761c53bf9081d

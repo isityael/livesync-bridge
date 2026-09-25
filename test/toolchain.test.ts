@@ -5,15 +5,21 @@ import { describe, expect, it } from "vitest";
 
 const execFileAsync = promisify(execFile);
 
+async function packagePnpmVersion(): Promise<string> {
+  const manifest = JSON.parse(await readFile("package.json", "utf8"));
+  expect(manifest.packageManager).toMatch(/^pnpm@12\.\d+\.\d+$/);
+  return manifest.packageManager.slice("pnpm@".length);
+}
+
 describe("mise toolchain activation", () => {
-  it("pins Node 26 and pnpm 11 in the repository configuration", async () => {
+  it("pins Node 26 and the package-declared pnpm version in mise", async () => {
     const config = await readFile(".mise.toml", "utf8");
 
     expect(config).toMatch(/^node = "26"$/m);
-    expect(config).toMatch(/^pnpm = "11"$/m);
+    expect(config).toContain(`pnpm = "${await packagePnpmVersion()}"`);
   });
 
-  it("places the pinned Node 26 and pnpm 11 binaries first for ordinary mise exec", async () => {
+  it("places the pinned toolchain first for ordinary mise exec", async () => {
     const { stdout: misePath } = await execFileAsync("sh", [
       "-c",
       "command -v mise || true",
@@ -40,7 +46,10 @@ describe("mise toolchain activation", () => {
 
     expect(nodePath).toContain("/.local/share/mise/installs/node/26/bin/node");
     expect(nodeVersion).toMatch(/^v26\./);
-    expect(pnpmPath).toContain("/.local/share/mise/installs/pnpm/11/pnpm");
-    expect(pnpmVersion).toMatch(/^11\./);
+    const pinnedPnpmVersion = await packagePnpmVersion();
+    expect(pnpmPath).toContain(
+      `/.local/share/mise/installs/pnpm/${pinnedPnpmVersion}/pnpm`,
+    );
+    expect(pnpmVersion).toBe(pinnedPnpmVersion);
   });
 });
