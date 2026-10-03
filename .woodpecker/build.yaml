@@ -6,7 +6,7 @@ when:
     ref: refs/tags/v*-ym.*
 
 variables:
-  - &node_image "dhi.io/node:26.10.0-alpine3.24-dev@sha256:ff626b5b40eb41700bd35fb24230c5d7da87aa68f70afce18336f43b3a933eab"
+  - &node_image "dhi.io/node:26.10.0-alpine3.24-dev@sha256:8da859df5dc853c923ace53c4cfe994a909a28917f7fcfc8508869beab8cf132"
   - &pnpm_install "corepack enable && pnpm config set store-dir /woodpecker/cache/livesync-bridge/pnpm-store && pnpm install --frozen-lockfile --ignore-scripts"
 
 steps:
@@ -56,7 +56,7 @@ steps:
       sbom: true
 
   - name: scan-candidate
-    image: dhi.io/trivy:0.74.0-alpine3.24-dev@sha256:c0fe6badae7fa331254b3ea3b53ea1e74e7067ce5aa63f6f05e40538963d97b6
+    image: dhi.io/trivy:0.74.0-alpine3.24-dev@sha256:890959097c42f46293fba3164233c2c75a5f0c2f0ea8dc75da0fb949c3676773
     when:
       - event: tag
     environment:
@@ -68,7 +68,7 @@ steps:
       - trivy image --exit-code 1 --severity HIGH,CRITICAL --ignore-unfixed "git.m0sh1.cc/m0sh1-internal/livesync-bridge:candidate-$${CI_COMMIT_SHA}"
 
   - name: sign-candidate
-    image: dhi.io/cosign:3.1.3-alpine3.24-dev@sha256:e72a27089bde22daa2cc8653011ef55c4a8ecfb7cc5271df62325cd661d77eff
+    image: dhi.io/cosign:3.1.3-alpine3.24-dev@sha256:f360440d6eff959479be133e2ac32fa5b783afb48dfe4687cb3ee15501cf50b5
     when:
       - event: tag
     environment:
@@ -88,7 +88,7 @@ steps:
       - rm -f /tmp/cosign.key
 
   - name: promote-release
-    image: dhi.io/crane:0.21.9-debian13-dev@sha256:39110dab4bedf6778531d6ae9e334ccaa2b0a10db09c905cf14a663ccd01b2a1
+    image: dhi.io/crane:0.21.9-debian13-dev@sha256:fdc5bc0a413ee187d038716f811e861e43039262ea0e138b26ee064d817df60d
     when:
       - event: tag
     environment:
