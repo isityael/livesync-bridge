@@ -46,7 +46,7 @@
     "pouchdb-utils": "^9.0.0",
     "qrcode-generator": "^2.0.4",
     "transform-pouch": "^2.0.0",
-    "trystero": "^0.25.3"
+    "trystero": "^0.26.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
