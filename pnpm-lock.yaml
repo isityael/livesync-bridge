@@ -186,8 +186,8 @@ importers:
         specifier: ^4.6.2
         version: 4.6.2
       '@trystero-p2p/nostr':
-        specifier: ^0.25.3
-        version: 0.25.4
+        specifier: ^0.26.0
+        version: 0.26.0
       brace-expansion:
         specifier: ^5.0.12
         version: 5.0.12
@@ -753,8 +753,14 @@ packages:
   '@trystero-p2p/core@0.25.4':
     resolution: {integrity: sha512-ehvSL1FqW962XyEctXngeDF/IOM1bWmfCKBNR4vwmVa0JGfM0+dlY4TEzSEGghYp3qqGCrpFIVTxdvlBUGVO6Q==}
 
+  '@trystero-p2p/core@0.26.0':
+    resolution: {integrity: sha512-CZpeXPgfbDdFKrGxfD98F9tn/fTjya4mQ2o/Ax6H0qpBaJXCBz5+jyPtjsYEPAAcKRK/btOatCetFiQ5qIMCOA==}
+
   '@trystero-p2p/nostr@0.25.4':
     resolution: {integrity: sha512-QDox1VVHl0ro/CLfQVUtMS9EQbtJhQM7CCsO4SGv9KrPBT+x3bmOqQ4Y6iugsLzQ6sW+a2cwUTxjDRz/BywqMg==}
+
+  '@trystero-p2p/nostr@0.26.0':
+    resolution: {integrity: sha512-HArp9fonBkqFZgw3U2D823fCePQv7haKkvjtwbGRkWzy+Wo9G3cCDEnG/GENDWwzERHrhRcRacpFsFt4JpwRJQ==}
 
   '@types/chai@5.2.3':
     resolution: {integrity: sha512-Mw558oeA9fFbv65/y4mHtXDs9bPnFMZAL/jxdPFUpOHHIXX91mcgEHbS5Lahr+pwZFR8A7GQleRWeI6cGFC2UA==}
@@ -2292,10 +2298,17 @@ snapshots:
 
   '@trystero-p2p/core@0.25.4': {}
 
+  '@trystero-p2p/core@0.26.0': {}
+
   '@trystero-p2p/nostr@0.25.4':
     dependencies:
       '@noble/secp256k1': 3.2.0
       '@trystero-p2p/core': 0.25.4
+
+  '@trystero-p2p/nostr@0.26.0':
+    dependencies:
+      '@noble/secp256k1': 3.2.0
+      '@trystero-p2p/core': 0.26.0
 
   '@types/chai@5.2.3':
     dependencies:
