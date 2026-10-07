@@ -16,8 +16,8 @@
       "@/main": ["./stubs/obsidian.ts"],
       "@lib/*": ["./lib/src/*"],
       "@lib/pouchdb/pouchdb-browser.ts": ["./lib/src/pouchdb/pouchdb-http.ts"],
-      "@lib/worker/bgWorker": ["./lib/src/worker/bgWorker.mock.ts"],
-      "@lib/worker/bgWorker.ts": ["./lib/src/worker/bgWorker.mock.ts"],
+      "@lib/worker/bgWorker": ["./lib/src/worker/bgWorker.direct.ts"],
+      "@lib/worker/bgWorker.ts": ["./lib/src/worker/bgWorker.direct.ts"],
       "@smithy/fetch-http-handler": ["./stubs/smithy-fetch-http-handler.ts"],
       "obsidian": ["./stubs/obsidian.ts"],
       "svelte": ["./stubs/svelte.ts"]

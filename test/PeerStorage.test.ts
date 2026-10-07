@@ -256,3 +256,86 @@ describe("PeerStorage", () => {
     }
   });
 });
+
+it("converts every Windows separator and preserves POSIX backslash filenames", () => {
+  const peer = new PeerStorage(
+    { type: "storage", name: "paths", baseDir: "" },
+    async () => {},
+  );
+  peer.pathSeparator = "\\";
+  expect(peer.toPosixPath("a\\b\\c.md")).toBe("a/b/c.md");
+  expect(peer.isUnsafeVaultPath("a\\b/c.md")).toBe(true);
+  peer.pathSeparator = "/";
+  expect(peer.toPosixPath("a\\b/c.md")).toBe("a\\b/c.md");
+  expect(peer.isUnsafeVaultPath("a\\b/c.md")).toBe(false);
+});
+
+it("ignores deletion events from siblings and similar root prefixes", async () => {
+  const root = await mkdtemp(path.join(tmpdir(), "livesync-upstream-"));
+  try {
+    const dispatch = vi.fn(async () => {});
+    const peer = storagePeer(path.join(root, "vault"), dispatch);
+    await peer.dispatchDeleted(path.join(root, "other", "note.md"));
+    await peer.dispatchDeleted(path.join(root, "vault-other", "note.md"));
+    expect(dispatch).not.toHaveBeenCalled();
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+it("keeps existing data when an empty payload claims nonzero bytes", async () => {
+  const root = await mkdtemp(path.join(tmpdir(), "livesync-upstream-"));
+  try {
+    const peer = storagePeer(root);
+    await writeFile(path.join(root, "note.md"), "keep");
+    expect(await peer.put("note.md", { ...textData(""), size: 4 })).toBe(false);
+    expect(await readFile(path.join(root, "note.md"), "utf8")).toBe("keep");
+    expect(await peer.put("note.md", textData("replacement"))).toBe(true);
+    expect(await readFile(path.join(root, "note.md"), "utf8")).toBe(
+      "replacement",
+    );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+it("uses the vault path for incoming repeat reservations", async () => {
+  const root = await mkdtemp(path.join(tmpdir(), "livesync-upstream-"));
+  try {
+    const peer = storagePeer(root);
+    expect(await peer.put("nested/note.md", textData("remote"))).toBe(true);
+    expect(peer.cache.has("nested/note.md")).toBe(true);
+    expect(peer.cache.has(path.join(root, "nested/note.md"))).toBe(false);
+    expect(await peer.put("nested/note.md", textData("local edit"))).toBe(true);
+    expect(await readFile(path.join(root, "nested/note.md"), "utf8")).toBe(
+      "local edit",
+    );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+it("waits for watcher close and clears the active watcher", async () => {
+  const peer = new PeerStorage(
+    { type: "storage", name: "watch", baseDir: "" },
+    async () => {},
+  );
+  let finish!: () => void;
+  const close = vi.fn(
+    () =>
+      new Promise<void>((resolve) => {
+        finish = resolve;
+      }),
+  );
+  peer.watcher = { close } as unknown as NonNullable<PeerStorage["watcher"]>;
+  let stopped = false;
+  const stopping = peer.stop().then(() => {
+    stopped = true;
+  });
+  await Promise.resolve();
+  expect(peer.watcher).toBeUndefined();
+  expect(stopped).toBe(false);
+  finish();
+  await stopping;
+  expect(stopped).toBe(true);
+});

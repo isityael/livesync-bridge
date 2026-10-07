@@ -19,14 +19,17 @@ const exactAliases = new Map([
     "@smithy/fetch-http-handler",
     fromRepo("stubs/smithy-fetch-http-handler.ts"),
   ],
-  ["@lib/worker/bgWorker.ts", fromRepo("lib/src/worker/bgWorker.mock.ts")],
-  ["@lib/worker/bgWorker", fromRepo("lib/src/worker/bgWorker.mock.ts")],
+  ["@lib/worker/bgWorker.ts", fromRepo("lib/src/worker/bgWorker.direct.ts")],
+  ["@lib/worker/bgWorker", fromRepo("lib/src/worker/bgWorker.direct.ts")],
   [
     "@lib/pouchdb/pouchdb-browser.ts",
     fromRepo("lib/src/pouchdb/pouchdb-http.ts"),
   ],
-  ["./lib/src/worker/bgWorker.ts", fromRepo("lib/src/worker/bgWorker.mock.ts")],
-  ["./lib/src/worker/bgWorker", fromRepo("lib/src/worker/bgWorker.mock.ts")],
+  [
+    "./lib/src/worker/bgWorker.ts",
+    fromRepo("lib/src/worker/bgWorker.direct.ts"),
+  ],
+  ["./lib/src/worker/bgWorker", fromRepo("lib/src/worker/bgWorker.direct.ts")],
   [
     "./lib/src/pouchdb/pouchdb-browser.ts",
     fromRepo("lib/src/pouchdb/pouchdb-http.ts"),

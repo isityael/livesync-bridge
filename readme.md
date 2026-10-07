@@ -244,3 +244,21 @@ Totally, all files are synchronized like this:
   ],
 }
 ```
+
+## Upstream integration
+
+The October 2026 upstream service APIs and storage path/event fixes are integrated
+while retaining the canonical Forgejo library submodule, Node 26 / DHI runtime,
+PNPM 12.9.1, durable checkpoint callbacks, baseline and tombstone safeguards,
+and transactional repeat reservations. Windows vault paths use forward slashes;
+ambiguous backslash writes are rejected. Filesystem events outside a peer root
+are ignored, and unlink events require confirmed absence before propagation.
+
+Fork resolutions preserve the existing HTTP health endpoint and bounded startup/watch
+recovery rather than adopting the upstream Deno heartbeat, and keep internal
+metadata excluded under the existing folder and tombstone contract. Upstream
+Deno-only tests are replaced by native Vitest coverage for storage root isolation,
+Windows separators, empty payloads, repeat keys and watcher shutdown. An invalid
+empty CouchDB payload throws before checkpoint advancement so durable replay can
+retry it safely. The real manipulator initialization smoke uses a mocked CouchDB
+transport; this is not a live Vault restore test.

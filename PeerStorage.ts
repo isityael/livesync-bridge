@@ -18,6 +18,7 @@ import {
   writeFile,
 } from "node:fs/promises";
 import {
+  sep,
   dirname,
   format,
   isAbsolute,
@@ -35,20 +36,24 @@ import type { Stats } from "node:fs";
 
 export class PeerStorage extends Peer {
   declare config: PeerStorageConf;
+  pathSeparator: string = sep;
 
   constructor(conf: PeerStorageConf, dispatcher: DispatchFun) {
     super(conf, dispatcher);
   }
 
   async delete(pathSrc: string): Promise<boolean> {
-    if (this.shouldIgnoreRelativePath(pathSrc)) {
+    if (
+      this.isUnsafeVaultPath(pathSrc) ||
+      this.shouldIgnoreRelativePath(pathSrc)
+    ) {
       this.receiveLog(` ${pathSrc} delete ignored`);
       return false;
     }
     const resolved = this.resolveStoragePath(pathSrc);
     if (!resolved) return false;
-    const { localPath: lp, storagePath: path } = resolved;
-    const reservation = await this.reserveChange(lp, false);
+    const { storagePath: path } = resolved;
+    const reservation = await this.reserveChange(pathSrc, false);
     if (reservation.repeating) {
       return true;
     }
@@ -80,14 +85,31 @@ export class PeerStorage extends Peer {
     return true;
   }
   async put(pathSrc: string, data: FileData): Promise<boolean> {
-    if (this.shouldIgnoreRelativePath(pathSrc)) {
+    if (
+      this.isUnsafeVaultPath(pathSrc) ||
+      this.shouldIgnoreRelativePath(pathSrc)
+    ) {
       this.receiveLog(` ${pathSrc} save ignored`);
       return false;
     }
     const resolved = this.resolveStoragePath(pathSrc);
     if (!resolved) return false;
     const { localPath: lp, storagePath: path } = resolved;
-    const reservation = await this.reserveChange(lp, data);
+    const bytes =
+      data.data instanceof Uint8Array
+        ? data.data
+        : new TextEncoder().encode(getDocData(data.data));
+    if (bytes.byteLength === 0 && data.size > 0) {
+      try {
+        if ((await fsStat(path)).size > 0) {
+          this.normalLog(`Empty write blocked: ${pathSrc}`, LOG_LEVEL_NOTICE);
+          return false;
+        }
+      } catch (error) {
+        if (!isNotFoundError(error)) throw error;
+      }
+    }
+    const reservation = await this.reserveChange(pathSrc, data);
     if (reservation.repeating) {
       this.receiveLog(`${lp} save repeating`);
       return true;
@@ -100,10 +122,6 @@ export class PeerStorage extends Peer {
         // While recursive is true, mkdir will not raise the `AlreadyExist`.
         Logger(ex, LOG_LEVEL_NOTICE);
       }
-      const bytes =
-        data.data instanceof Uint8Array
-          ? data.data
-          : new TextEncoder().encode(getDocData(data.data));
       await writeFile(path, bytes);
       await utimes(path, new Date(data.mtime), new Date(data.mtime));
       this.receiveLog(`${lp} saved`);
@@ -239,7 +257,7 @@ export class PeerStorage extends Peer {
   async dispatch(pathSrc: string) {
     const lP = this.storageRootPath();
     const path = this.toPosixPath(relative(lP, pathSrc));
-    if (this.shouldIgnoreRelativePath(path)) {
+    if (this.isOutsideBaseDir(path) || this.shouldIgnoreRelativePath(path)) {
       return;
     }
 
@@ -270,7 +288,7 @@ export class PeerStorage extends Peer {
   async dispatchDeleted(pathSrc: string) {
     const lP = this.storageRootPath();
     const path = this.toPosixPath(relative(lP, pathSrc));
-    if (this.shouldIgnoreRelativePath(path)) {
+    if (this.isOutsideBaseDir(path) || this.shouldIgnoreRelativePath(path)) {
       return;
     }
     await scheduleOnceIfDuplicated(pathSrc, async () => {
@@ -289,8 +307,22 @@ export class PeerStorage extends Peer {
     });
   }
 
+  isOutsideBaseDir(path: string) {
+    return (
+      path === ".." ||
+      path.startsWith("../") ||
+      (this.pathSeparator === "\\" && path.startsWith("..\\")) ||
+      isAbsolute(path)
+    );
+  }
+  isUnsafeVaultPath(path: string) {
+    return this.pathSeparator !== "/" && path.includes(this.pathSeparator);
+  }
   toPosixPath(path: string) {
-    const ret = posixFormat(parse(path));
+    const ret =
+      this.pathSeparator === "/"
+        ? posixFormat(parse(path))
+        : path.replaceAll(this.pathSeparator, "/");
     // this.debugLog(`**TOPOSIX ${path} -> ${ret}`)
     return ret;
   }
@@ -383,8 +415,9 @@ export class PeerStorage extends Peer {
 
   async start() {
     if (this.watcher) {
-      this.watcher.close();
+      const previous = this.watcher;
       this.watcher = undefined;
+      await previous.close();
     }
     const lP = this.storageRootPath();
     this.normalLog(
@@ -423,12 +456,22 @@ export class PeerStorage extends Peer {
     });
     this.watcher.on("unlink", async (path: string) => {
       const ePath = this.toPosixPath(relative(lP, path));
+      try {
+        await fsStat(path);
+        return;
+      } catch (error) {
+        if (!isNotFoundError(error)) {
+          Logger(error, LOG_LEVEL_NOTICE);
+          return;
+        }
+      }
       this.debugLog(`Unlink detected: ${ePath}`);
       await this.dispatchDeleted(path);
     });
   }
   async stop() {
-    this.watcher?.close();
-    return await Promise.resolve();
+    const watcher = this.watcher;
+    this.watcher = undefined;
+    await watcher?.close();
   }
 }
