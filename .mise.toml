@@ -1,6 +1,6 @@
 [tools]
 node = "26"
-pnpm = "12.8.2"
+pnpm = "12.9.1"
 
 [settings]
 activate_aggressive = true
