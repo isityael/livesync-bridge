@@ -13,7 +13,7 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: "26"
-      - run: npm install --global pnpm@12.9.1
+      - run: npm install --global pnpm@12.10.1
       - run: pnpm install --frozen-lockfile --ignore-scripts
       - run: .ci/test-release-policy.sh
       - run: pnpm run fmt:check && pnpm run lint && pnpm run typecheck && pnpm test
