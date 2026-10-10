@@ -6,7 +6,7 @@ when:
     ref: refs/tags/v*-ym.*
 
 variables:
-  - &node_image "dhi.io/node:26.10.0-alpine3.24-dev@sha256:8da859df5dc853c923ace53c4cfe994a909a28917f7fcfc8508869beab8cf132"
+  - &node_image "dhi.io/node:26.11.1-alpine3.24-dev@sha256:b45c7e88727f7d9431cee5e320b72a89a076c40225313671c189250ea0402319"
   - &pnpm_install "corepack enable && pnpm config set store-dir /woodpecker/cache/livesync-bridge/pnpm-store && pnpm install --frozen-lockfile --ignore-scripts"
 
 steps:
