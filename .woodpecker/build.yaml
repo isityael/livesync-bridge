@@ -56,7 +56,7 @@ steps:
       sbom: true
 
   - name: scan-candidate
-    image: dhi.io/trivy:0.74.0-alpine3.24-dev@sha256:bde9f358940a099319e4fab323d9d898a8a6ed261a641335cb3d85e3d94be905
+    image: dhi.io/trivy:0.74.0-alpine3.24-dev@sha256:0ccc6d380d9bbda6de62735e4ff5f210f6f82c6cd82afd01167781f9a0dba053
     when:
       - event: tag
     environment:
