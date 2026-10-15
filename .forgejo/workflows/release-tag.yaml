@@ -34,7 +34,7 @@ jobs:
 
       - name: Install pnpm and locked dependencies
         run: |
-          npm install --global pnpm@12.10.1
+          npm install --global pnpm@12.11.2
           pnpm install --frozen-lockfile --ignore-scripts
 
       - name: Validate application and release policy
