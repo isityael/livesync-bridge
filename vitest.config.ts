@@ -21,11 +21,11 @@ export default defineConfig({
       },
       {
         find: "@lib/worker/bgWorker.ts",
-        replacement: here("./lib/src/worker/bgWorker.mock.ts"),
+        replacement: here("./lib/src/worker/bgWorker.direct.ts"),
       },
       {
         find: "@lib/worker/bgWorker",
-        replacement: here("./lib/src/worker/bgWorker.mock.ts"),
+        replacement: here("./lib/src/worker/bgWorker.direct.ts"),
       },
       {
         find: "@lib/pouchdb/pouchdb-browser.ts",

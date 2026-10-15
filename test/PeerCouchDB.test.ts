@@ -1,7 +1,7 @@
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { Hub } from "../Hub.ts";
 import { PeerCouchDB } from "../PeerCouchDB.ts";
 import type { Peer } from "../Peer.ts";
@@ -472,4 +472,14 @@ describe("PeerCouchDB watch checkpoints", () => {
       await rm(root, { recursive: true, force: true });
     }
   });
+});
+
+it("rejects inconsistent empty content before reservations and checkpoint progress", async () => {
+  const dispatch = vi.fn(async () => {});
+  const peer = Object.create(PeerCouchDB.prototype) as PeerCouchDB;
+  peer.dispatchToHub = dispatch;
+  await expect(
+    peer.dispatch("note.md", { ctime: 0, mtime: 0, size: 16, data: [] }),
+  ).rejects.toThrow("16 bytes reported");
+  expect(dispatch).not.toHaveBeenCalled();
 });

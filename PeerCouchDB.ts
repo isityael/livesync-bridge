@@ -17,6 +17,7 @@ import {
   createBinaryBlob,
   createTextBlob,
   isDocContentSame,
+  getDocData,
   unique,
 } from "./lib/src/common/utils.ts";
 import { DurableDirectFileManipulator } from "./runtime/durable_manipulator.ts";
@@ -360,6 +361,16 @@ export class PeerCouchDB extends Peer {
   }
   async dispatch(path: string, data: FileData | false) {
     if (data === false) return;
+    if (
+      data.size > 0 &&
+      (data.data instanceof Uint8Array
+        ? data.data.byteLength === 0
+        : getDocData(data.data).length === 0)
+    ) {
+      throw new Error(
+        `Empty update blocked: ${path} (${data.size} bytes reported, 0 bytes received)`,
+      );
+    }
     const reservation = await this.reserveChange(path, data);
     if (!reservation.repeating) {
       try {
