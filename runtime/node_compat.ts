@@ -205,7 +205,11 @@ export interface WalkEntry {
   isFile: boolean;
 }
 
-export async function* walkFiles(root: string): AsyncGenerator<WalkEntry> {
+export async function* walkFiles(
+  root: string,
+  excluded?: (path: string) => boolean,
+): AsyncGenerator<WalkEntry> {
+  if (excluded?.(root)) return;
   const rootStat = await stat(root);
   if (rootStat.isFile()) {
     yield { path: root, isFile: true };
@@ -214,8 +218,9 @@ export async function* walkFiles(root: string): AsyncGenerator<WalkEntry> {
 
   for await (const entry of await opendir(root)) {
     const entryPath = path.join(root, entry.name);
+    if (excluded?.(entryPath)) continue;
     if (entry.isDirectory()) {
-      yield* walkFiles(entryPath);
+      yield* walkFiles(entryPath, excluded);
     } else {
       yield { path: entryPath, isFile: entry.isFile() };
     }

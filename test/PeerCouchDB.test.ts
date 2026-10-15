@@ -15,7 +15,10 @@ function inertManipulator() {
   } as never;
 }
 
-function couchPeer(stateDir: string): PeerCouchDB {
+function couchPeer(
+  stateDir: string,
+  overrides: Partial<PeerCouchDBConf> = {},
+): PeerCouchDB {
   installLocalStorage(stateDir);
   localStorage.clear();
   const config: PeerCouchDBConf = {
@@ -28,9 +31,63 @@ function couchPeer(stateDir: string): PeerCouchDB {
     password: "test",
     passphrase: "",
     obfuscatePassphrase: "",
+    ...overrides,
   };
   return new PeerCouchDB(config, async () => {}, undefined, inertManipulator());
 }
+
+describe("upstream ID-key configuration", () => {
+  const idKey = "0123456789abcdef".repeat(4);
+  it("normalizes raw keys and recovery codes before initializing the manipulator", async () => {
+    const root = await mkdtemp(path.join(tmpdir(), "livesync-id-key-"));
+    try {
+      for (const key of [idKey, ` ${idKey} `, ` sls-id-v1:${idKey} `]) {
+        const peer = couchPeer(root, { idDerivationKey: key });
+        expect(peer.config.idDerivationKey).toBe(idKey);
+        expect(peer.config.idDerivationVersion).toBe(1);
+      }
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+  it("treats blank keys as omitted and preserves an explicit derivation version", async () => {
+    const root = await mkdtemp(path.join(tmpdir(), "livesync-id-key-"));
+    try {
+      for (const key of [undefined, "", " \t\n"]) {
+        const peer = couchPeer(root, { idDerivationKey: key });
+        expect(peer.config.idDerivationKey).toBeUndefined();
+        expect(peer.config.idDerivationVersion).toBeUndefined();
+      }
+      for (const version of [0, 1] as const) {
+        expect(
+          couchPeer(root, {
+            idDerivationKey: `sls-id-v1:${idKey}`,
+            idDerivationVersion: version,
+          }).config.idDerivationVersion,
+        ).toBe(version);
+      }
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+  it("rejects malformed ID keys before creating a manipulator", async () => {
+    const root = await mkdtemp(path.join(tmpdir(), "livesync-id-key-"));
+    try {
+      for (const key of [
+        "not-a-key",
+        idKey.slice(1),
+        `sls-id-v2:${idKey}`,
+        idKey.toUpperCase(),
+      ]) {
+        expect(() => couchPeer(root, { idDerivationKey: key })).toThrow(
+          /idDerivationKey/,
+        );
+      }
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+});
 
 describe("PeerCouchDB watch checkpoints", () => {
   it("retries identical destination puts and deletes after the adapter fails once", async () => {

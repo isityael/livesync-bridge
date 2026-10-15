@@ -150,6 +150,61 @@ The configuration file consists of the following structure.
 }
 ```
 
+## Vaults with an ID key
+
+Recent versions of Self-hosted LiveSync derive chunk IDs and obfuscated document IDs from a separate ID key. New vaults with E2EE get a random ID key by default. The bridge needs the same key, or the plugin cannot read the files the bridge writes. It then reports that not all files could be synchronised.
+
+Copy the key on any device with **Show current recovery code** in the plugin settings, and set it as `idDerivationKey`:
+
+```jsonc
+{
+  "type": "couchdb",
+  "name": "test1",
+  // ...
+  "passphrase": "passphrase",
+  "obfuscatePassphrase": "passphrase",
+  "idDerivationKey": "sls-id-v1:0123...cdef", // The recovery code, or the 64-character hex key on its own
+  "useRemoteTweaks": true,
+}
+```
+
+With a key configured, the bridge uses ID derivation version 1 unless `idDerivationVersion` says otherwise. Keep the key private, like the passphrase.
+
+## Excluding paths from a storage peer
+
+By default a storage peer synchronises every file below its `baseDir`. The
+optional `ignore` field on a storage peer excludes paths from that. It takes an
+array of [minimatch](https://github.com/isaacs/minimatch) glob patterns which
+are matched against the path relative to `baseDir`:
+
+```jsonc
+{
+  "type": "storage",
+  "name": "storage-test1",
+  "baseDir": "./vault/",
+  "ignore": ["**/.git/**", "node_modules/**", "**/*.tmp"],
+}
+```
+
+A path is excluded when it, or any directory containing it, matches any one of
+the patterns. Patterns are matched with the `dot` option, so leading-dot folders
+such as `.git/` are matched as expected. A pattern ending in `/**` also covers
+the directory itself, so `**/.git/**` excludes `.git` as well as everything
+inside it. Likewise, a pattern which matches a directory's name excludes
+everything below that directory: `private` excludes `private/note.md`, and
+`**/*.tmp` excludes the contents of a directory named `cache.tmp`.
+
+Excluded directories are pruned while scanning: they are not descended into, and
+nothing inside them is inspected or read. This matters for `scanOfflineChanges`,
+because a repository such as `.git/` can hold tens of thousands of files which
+would otherwise all be examined at every start. Excluded paths are also skipped
+for live additions, changes and deletions.
+
+Note that `ignore` only stops a storage peer from _sending_ its own changes.
+Incoming changes from other peers are still accepted: a file which another peer
+sends is still written, and a deletion which another peer sends is still
+applied, even at an excluded path.
+
 ## Realistic example
 
 | name                       | database_uri / path                       | CouchDB username | CouchDB password | vault E2EE passphrase | baseDir  |
@@ -249,10 +304,17 @@ Totally, all files are synchronized like this:
 
 The October 2026 upstream service APIs and storage path/event fixes are integrated
 while retaining the canonical Forgejo library submodule, Node 26 / DHI runtime,
-PNPM 12.9.1, durable checkpoint callbacks, baseline and tombstone safeguards,
+PNPM 12.11.2, durable checkpoint callbacks, baseline and tombstone safeguards,
 and transactional repeat reservations. Windows vault paths use forward slashes;
 ambiguous backslash writes are rejected. Filesystem events outside a peer root
 are ignored, and unlink events require confirmed absence before propagation.
+
+Storage peers now also support upstream `ignore` minimatch globs for outbound
+scans and live events, including pruning ignored directories. Incoming changes
+remain accepted for that option. The existing `ignorePaths` / `LS_IGNORE_PATHS`
+protection remains bilateral. ID-key recovery codes are normalized before
+initialization and select derivation v1 unless explicitly configured otherwise.
+Commonlib 0.1.40 preserves Node file birth times across in-place edits.
 
 Fork resolutions preserve the existing HTTP health endpoint and bounded startup/watch
 recovery rather than adopting the upstream Deno heartbeat, and keep internal

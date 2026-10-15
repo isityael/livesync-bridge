@@ -21,6 +21,7 @@ import {
   unique,
 } from "./lib/src/common/utils.ts";
 import { DurableDirectFileManipulator } from "./runtime/durable_manipulator.ts";
+import { normaliseIdDerivationKey } from "./util.ts";
 
 export interface PeerRuntimeHooks {
   beginReplay(): void;
@@ -47,6 +48,11 @@ export class PeerCouchDB extends Peer {
     manipulator?: DurableDirectFileManipulator,
   ) {
     super(conf, dispatcher);
+    const idDerivationKey = normaliseIdDerivationKey(
+      this.config.idDerivationKey,
+    );
+    this.config.idDerivationKey = idDerivationKey;
+    if (idDerivationKey) this.config.idDerivationVersion ??= 1;
     this.runtime = runtime;
     this.man = manipulator ?? new DurableDirectFileManipulator(conf);
     // Fetch remote since.
@@ -217,6 +223,10 @@ export class PeerCouchDB extends Peer {
         this.config.handleFilenameCaseSensitive =
           tweaks.handleFilenameCaseSensitive ??
           this.config.handleFilenameCaseSensitive;
+        this.config.idDerivationVersion =
+          tweaks.idDerivationVersion ?? this.config.idDerivationVersion;
+        this.config.encryptInternalMetadata =
+          tweaks.encryptInternalMetadata ?? this.config.encryptInternalMetadata;
         const newConf = { ...this.config } as Record<string, any>;
         this.man.options = this.config;
         await this.man.liveSyncLocalDB.initializeDatabase();

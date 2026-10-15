@@ -1,52 +1,54 @@
 import type { DirectFileManipulatorOptions } from "./lib/src/API/DirectFileManipulator.ts";
 
 export interface Config {
-    peers: PeerConf[];
+  peers: PeerConf[];
 }
 export type PeerConf = PeerStorageConf | PeerCouchDBConf;
 
 export interface PeerStorageConf {
-    scanOfflineChanges?: boolean;
-    type: "storage";
-    group?: string;
-    name: string;
-    baseDir: string;
-    ignorePaths?: string[];
-    processor?: {
-        cmd: string;
-        args: string[];
-    };
-    useChokidar?: boolean;
+  scanOfflineChanges?: boolean;
+  type: "storage";
+  group?: string;
+  name: string;
+  baseDir: string;
+  ignorePaths?: string[];
+  processor?: {
+    cmd: string;
+    args: string[];
+  };
+  useChokidar?: boolean;
+  /** Glob patterns for paths which are never synchronised, e.g. [".git/**"] */
+  ignore?: string[];
 }
 export interface PeerCouchDBConf extends DirectFileManipulatorOptions {
-    type: "couchdb";
-    useRemoteTweaks?: true;
-    group?: string;
-    name: string;
-    ignorePaths?: string[];
-    database: string;
-    username: string;
-    password: string;
-    url: string;
-    customChunkSize?: number;
-    minimumChunkSize?: number;
-    passphrase: string;
-    obfuscatePassphrase: string;
-    baseDir: string;
+  type: "couchdb";
+  useRemoteTweaks?: true;
+  group?: string;
+  name: string;
+  ignorePaths?: string[];
+  database: string;
+  username: string;
+  password: string;
+  url: string;
+  customChunkSize?: number;
+  minimumChunkSize?: number;
+  passphrase: string;
+  obfuscatePassphrase: string;
+  baseDir: string;
 }
 
 export function isCouchDBPeer(peer: PeerConf): peer is PeerCouchDBConf {
-    return peer.type == "couchdb";
+  return peer.type == "couchdb";
 }
 
 export function isStoragePeer(peer: PeerConf): peer is PeerStorageConf {
-    return peer.type == "storage";
+  return peer.type == "storage";
 }
 
 export type FileData = {
-    ctime: number;
-    mtime: number;
-    size: number;
-    data: string[] | Uint8Array<ArrayBuffer>;
-    deleted?: boolean;
+  ctime: number;
+  mtime: number;
+  size: number;
+  data: string[] | Uint8Array<ArrayBuffer>;
+  deleted?: boolean;
 };

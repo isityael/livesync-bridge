@@ -30,6 +30,8 @@ import { format as posixFormat, parse as posixParse } from "node:path/posix";
 import { scheduleOnceIfDuplicated } from "octagonal-wheels/concurrency/lock";
 import { DispatchFun, Peer } from "./Peer.ts";
 import chokidar from "chokidar";
+import { minimatch } from "minimatch";
+import { getNodeFileCreationTime } from "./lib/src/platform/node/index.ts";
 
 import { isNotFoundError, walkFiles } from "./runtime/node_compat.ts";
 import type { Stats } from "node:fs";
@@ -40,6 +42,26 @@ export class PeerStorage extends Peer {
 
   constructor(conf: PeerStorageConf, dispatcher: DispatchFun) {
     super(conf, dispatcher);
+  }
+
+  isIgnored(path: string): boolean {
+    if (!path) return false;
+    const configured = this.config.ignore ?? [];
+    const patterns = [
+      ...configured,
+      ...configured
+        .filter((pattern) => pattern.endsWith("/**"))
+        .map((pattern) => pattern.slice(0, -3)),
+    ];
+    const segments = path.split("/");
+    for (let depth = 1; depth <= segments.length; depth++) {
+      const candidate = segments.slice(0, depth).join("/");
+      if (
+        patterns.some((pattern) => minimatch(candidate, pattern, { dot: true }))
+      )
+        return true;
+    }
+    return false;
   }
 
   async delete(pathSrc: string): Promise<boolean> {
@@ -232,7 +254,7 @@ export class PeerStorage extends Peer {
       return false;
     }
     const ret: FileData = {
-      ctime: stat.birthtime?.getTime() ?? stat.mtime?.getTime() ?? 0,
+      ctime: getNodeFileCreationTime(stat),
       mtime: stat.mtime?.getTime() ?? 0,
       size: stat.size,
       data: [],
@@ -251,13 +273,17 @@ export class PeerStorage extends Peer {
     const relPath = this.toPosixPath(relative(lP, pathAbs));
     if (!relPath || relPath === ".") return false;
     if (relPath === ".." || relPath.startsWith("../")) return true;
-    return this.shouldIgnoreRelativePath(relPath);
+    return this.shouldIgnoreRelativePath(relPath) || this.isIgnored(relPath);
   }
 
   async dispatch(pathSrc: string) {
     const lP = this.storageRootPath();
     const path = this.toPosixPath(relative(lP, pathSrc));
-    if (this.isOutsideBaseDir(path) || this.shouldIgnoreRelativePath(path)) {
+    if (
+      this.isOutsideBaseDir(path) ||
+      this.shouldIgnoreRelativePath(path) ||
+      this.isIgnored(path)
+    ) {
       return;
     }
 
@@ -288,11 +314,25 @@ export class PeerStorage extends Peer {
   async dispatchDeleted(pathSrc: string) {
     const lP = this.storageRootPath();
     const path = this.toPosixPath(relative(lP, pathSrc));
-    if (this.isOutsideBaseDir(path) || this.shouldIgnoreRelativePath(path)) {
+    if (
+      this.isOutsideBaseDir(path) ||
+      this.shouldIgnoreRelativePath(path) ||
+      this.isIgnored(path)
+    ) {
       return;
     }
     await scheduleOnceIfDuplicated(pathSrc, async () => {
       await delay(250);
+      // A removed file may have been recreated while waiting behind a write.
+      try {
+        await fsStat(pathSrc);
+        return;
+      } catch (error) {
+        if (!isNotFoundError(error)) {
+          Logger(error, LOG_LEVEL_NOTICE);
+          return;
+        }
+      }
       const reservation = await this.reserveChange(path, false);
       if (!reservation.repeating) {
         this.sendLog(`${path} delete detected`);
@@ -399,7 +439,9 @@ export class PeerStorage extends Peer {
   }
   async scanOfflineChanges(): Promise<void> {
     const lP = this.storageRootPath();
-    for await (const entry of walkFiles(lP)) {
+    for await (const entry of walkFiles(lP, (path) =>
+      this.shouldIgnoreAbsolutePath(path),
+    )) {
       if (entry.isFile) {
         const ePath = this.toPosixPath(relative(lP, entry.path));
         if (this.shouldIgnoreRelativePath(ePath)) {

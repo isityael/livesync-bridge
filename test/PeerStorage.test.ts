@@ -1,4 +1,11 @@
-import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import {
+  chmod,
+  mkdtemp,
+  mkdir,
+  readFile,
+  rm,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { describe, expect, it, vi } from "vitest";
@@ -338,4 +345,144 @@ it("waits for watcher close and clears the active watcher", async () => {
   finish();
   await stopping;
   expect(stopped).toBe(true);
+});
+
+describe("upstream storage ignore and deletion semantics on Node", () => {
+  it("matches dot directories, ancestors and minimatch glob patterns", () => {
+    const peer = new PeerStorage(
+      {
+        type: "storage",
+        name: "glob",
+        baseDir: "",
+        ignore: [
+          "**/.git/**",
+          "node_modules/**",
+          "private",
+          "**/*.tmp",
+          "**/*.{bak,old}",
+        ],
+      },
+      async () => {},
+    );
+    for (const value of [
+      ".git",
+      "nested/.git/config",
+      "node_modules/pkg/index.js",
+      "private/note.md",
+      "cache.tmp/note.md",
+      "nested/note.bak",
+      "note.old",
+    ])
+      expect(peer.isIgnored(value)).toBe(true);
+    for (const value of [
+      "",
+      "public/note.md",
+      "nested/private/note.md",
+      ".github/workflow.yml",
+    ])
+      expect(peer.isIgnored(value)).toBe(false);
+  });
+  it("accepts incoming writes and deletions at outbound-only ignored paths", async () => {
+    const root = await mkdtemp(path.join(tmpdir(), "livesync-ignore-"));
+    try {
+      const peer = storagePeer(root, undefined, [".state"]);
+      peer.config.ignore = ["private/**"];
+      expect(await peer.put("private/note.md", textData("incoming"))).toBe(
+        true,
+      );
+      expect(await readFile(path.join(root, "private/note.md"), "utf8")).toBe(
+        "incoming",
+      );
+      expect(await peer.delete("private/note.md")).toBe(true);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+  it("prunes excluded directories before opening them during offline scans", async () => {
+    const root = await mkdtemp(path.join(tmpdir(), "livesync-ignore-"));
+    const hidden = path.join(root, "private");
+    const seen: string[] = [];
+    try {
+      await mkdir(hidden);
+      await writeFile(path.join(hidden, "secret.md"), "excluded");
+      await writeFile(path.join(root, "public.md"), "visible");
+      await writeFile(path.join(root, "skip.tmp"), "excluded");
+      await chmod(hidden, 0);
+      const peer = storagePeer(
+        root,
+        async (_source, name) => {
+          seen.push(name);
+        },
+        [".state"],
+      );
+      peer.config.ignore = ["private", "**/*.tmp"];
+      await peer.scanOfflineChanges();
+      await vi.waitFor(() => expect(seen).toContain("public.md"));
+      expect(seen).toEqual(["public.md"]);
+    } finally {
+      await chmod(hidden, 0o700);
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+  it("drops ignored live changes and deletions including descendant paths", async () => {
+    const root = await mkdtemp(path.join(tmpdir(), "livesync-ignore-"));
+    try {
+      const dispatch = vi.fn(async () => {});
+      const peer = storagePeer(root, dispatch, [".state"]);
+      peer.config.ignore = ["private"];
+      await mkdir(path.join(root, "private"));
+      await writeFile(path.join(root, "private/note.md"), "excluded");
+      await peer.dispatch(path.join(root, "private/note.md"));
+      await peer.dispatchDeleted(path.join(root, "private/deleted.md"));
+      await new Promise((resolve) => setTimeout(resolve, 350));
+      expect(dispatch).not.toHaveBeenCalled();
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+  it("does not propagate a deletion if the file is recreated during the dispatch delay", async () => {
+    const root = await mkdtemp(path.join(tmpdir(), "livesync-recreate-"));
+    try {
+      const dispatch = vi.fn(async () => {});
+      const peer = storagePeer(root, dispatch);
+      const file = path.join(root, "note.md");
+      const pending = peer.dispatchDeleted(file);
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      await writeFile(file, "recreated");
+      await pending;
+      expect(dispatch).not.toHaveBeenCalled();
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+  it("propagates recursive folder removal as per-file Node watcher deletions", async () => {
+    const root = await mkdtemp(path.join(tmpdir(), "livesync-recursive-"));
+    const seen: string[] = [];
+    const peer = storagePeer(
+      root,
+      async (_source, name, data) => {
+        if (data === false) seen.push(name);
+      },
+      [".state"],
+    );
+    try {
+      peer.config.scanOfflineChanges = false;
+      await mkdir(path.join(root, "folder/nested"), { recursive: true });
+      await writeFile(path.join(root, "folder/a.md"), "a");
+      await writeFile(path.join(root, "folder/nested/b.md"), "b");
+      await peer.start();
+      await new Promise<void>((resolve) =>
+        peer.watcher!.once("ready", resolve),
+      );
+      await rm(path.join(root, "folder"), { recursive: true });
+      await vi.waitFor(
+        () =>
+          expect(seen.sort()).toEqual(["folder/a.md", "folder/nested/b.md"]),
+        { timeout: 4000 },
+      );
+    } finally {
+      await peer.stop();
+      await rm(root, { recursive: true, force: true });
+    }
+  });
 });
