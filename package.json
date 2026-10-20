@@ -61,6 +61,6 @@
     "typescript": "7.1.0-dev.20261018.1",
     "typescript-eslint": "8.71.3-alpha.13",
     "typescript-eslint-compiler": "npm:typescript@6.0.3",
-    "vitest": "5.0.4"
+    "vitest": "5.0.5"
   }
 }
