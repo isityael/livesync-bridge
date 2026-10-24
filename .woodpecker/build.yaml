@@ -6,7 +6,7 @@ when:
     ref: refs/tags/v*-ym.*
 
 variables:
-  - &node_image "dhi.io/node:26.12.0-alpine3.24-dev@sha256:ba91f22f46df3bf035b22a31f5dbd0e3e3bf09647ad2c1dc6c723056167daac3"
+  - &node_image "dhi.io/node:26.12.1-alpine3.24-dev@sha256:c870cbe703c1fd8d3200d33d14b7bafe310423728759b14c002558010b3ca9cb"
   - &pnpm_install "corepack enable && pnpm config set store-dir /woodpecker/cache/livesync-bridge/pnpm-store && pnpm install --frozen-lockfile --ignore-scripts"
 
 steps:
@@ -88,7 +88,7 @@ steps:
       - rm -f /tmp/cosign.key
 
   - name: promote-release
-    image: dhi.io/crane:0.21.9-debian13-dev@sha256:5bfcd75bed71149f815c427030d89dfb861b0bc3f07f93f41c000bd3c9bde8eb
+    image: dhi.io/crane:0.22.1-debian13-dev@sha256:82b1dc28811889cba5bcab21f599349347944a11faee62dcd5cfc43b16d28838
     when:
       - event: tag
     environment:
