@@ -1,6 +1,6 @@
 # Stage 1: install dependencies and bundle the bridge.
-ARG NODE_BUILDER_IMAGE=dhi.io/node:26.12.0-alpine3.24-dev@sha256:ba91f22f46df3bf035b22a31f5dbd0e3e3bf09647ad2c1dc6c723056167daac3
-ARG NODE_RUNTIME_IMAGE=dhi.io/node:26.12.0-alpine3.24@sha256:0234098bb438ebb7f6a74ea4885a272616f0e6a9ad1a45ee48500616b956fd6d
+ARG NODE_BUILDER_IMAGE=dhi.io/node:26.12.1-alpine3.24-dev@sha256:c870cbe703c1fd8d3200d33d14b7bafe310423728759b14c002558010b3ca9cb
+ARG NODE_RUNTIME_IMAGE=dhi.io/node:26.12.1-alpine3.24@sha256:f175282a7d1e2091c557a5de17c2fa2e70cd81a950f4234436ffd91af7ad78f1
 
 FROM ${NODE_BUILDER_IMAGE} AS builder
 
