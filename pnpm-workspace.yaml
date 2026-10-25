@@ -38,14 +38,15 @@ minimumReleaseAgeExclude:
   - "@smithy/util-retry@4.5.15"
   - "@types/node@26.1.2"
   - minimatch@10.2.6
-  - "@typescript/typescript-darwin-arm64@7.1.0-dev.20261015.1"
-  - "@typescript/typescript-darwin-x64@7.1.0-dev.20261015.1"
-  - "@typescript/typescript-linux-arm64@7.1.0-dev.20261015.1"
-  - "@typescript/typescript-linux-arm@7.1.0-dev.20261015.1"
-  - "@typescript/typescript-linux-x64@7.1.0-dev.20261015.1"
-  - "@typescript/typescript-win32-arm64@7.1.0-dev.20261015.1"
-  - "@typescript/typescript-win32-x64@7.1.0-dev.20261015.1"
-  - typescript@7.1.0-dev.20261015.1
+  # Exact compiler release approved by the maintainer for this update.
+  - "@typescript/typescript-darwin-arm64@7.1.0-dev.20261025.1"
+  - "@typescript/typescript-darwin-x64@7.1.0-dev.20261025.1"
+  - "@typescript/typescript-linux-arm64@7.1.0-dev.20261025.1"
+  - "@typescript/typescript-linux-arm@7.1.0-dev.20261025.1"
+  - "@typescript/typescript-linux-x64@7.1.0-dev.20261025.1"
+  - "@typescript/typescript-win32-arm64@7.1.0-dev.20261025.1"
+  - "@typescript/typescript-win32-x64@7.1.0-dev.20261025.1"
+  - typescript@7.1.0-dev.20261025.1
 
 peerDependencyRules:
   allowedVersions:
