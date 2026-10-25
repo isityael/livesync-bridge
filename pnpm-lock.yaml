@@ -188,6 +188,9 @@ importers:
       '@trystero-p2p/nostr':
         specifier: ^0.26.0
         version: 0.26.0
+      '@vrtmrz/value-store':
+        specifier: 0.1.0
+        version: 0.1.0
       brace-expansion:
         specifier: ^5.0.12
         version: 5.0.12
@@ -230,6 +233,9 @@ importers:
       pouchdb-adapter-memory:
         specifier: ^9.0.0
         version: 9.0.0
+      pouchdb-checkpointer:
+        specifier: 9.0.0
+        version: 9.0.0
       pouchdb-core:
         specifier: ^9.0.0
         version: 9.0.0
@@ -238,6 +244,9 @@ importers:
         version: 9.0.0
       pouchdb-find:
         specifier: ^9.0.0
+        version: 9.0.0
+      pouchdb-generate-replication-id:
+        specifier: 9.0.0
         version: 9.0.0
       pouchdb-mapreduce:
         specifier: ^9.0.0
@@ -957,6 +966,9 @@ packages:
 
   '@vitest/spy@5.0.5':
     resolution: {integrity: sha512-lwJRExuH417257Q5wv9QYugN9IMJkoxcrKrYxGPQkBzl7wlNpTUxD/5yNX4ESKVUIShKPgkGchYPFMWOOk0wzw==}
+
+  '@vrtmrz/value-store@0.1.0':
+    resolution: {integrity: sha512-M62f1j0bnJkqpgI5sYxnkXUAOSDEwQbYrLf+w58gCCm4sjIXDmFzDJd2duXabRbktBlACt9P99yjN/9gOAPxrA==}
 
   abstract-leveldown@2.7.2:
     resolution: {integrity: sha512-+OVvxH2rHVEhWLdbudP6p0+dNMXu8JA1CbhP19T8paTYAcX7oJ4OVjT+ZUVpv7mITxXHqDMej+GdqXBmXkw09w==}
@@ -2471,6 +2483,8 @@ snapshots:
       vite: 8.3.4(@types/node@26.6.5)(esbuild@0.28.2)
 
   '@vitest/spy@5.0.5': {}
+
+  '@vrtmrz/value-store@0.1.0': {}
 
   abstract-leveldown@2.7.2:
     dependencies:

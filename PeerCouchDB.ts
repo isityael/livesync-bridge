@@ -56,7 +56,14 @@ export class PeerCouchDB extends Peer {
     this.runtime = runtime;
     this.man = manipulator ?? new DurableDirectFileManipulator(conf);
     // Fetch remote since.
-    this.man.since = this.getSetting("since") || "now";
+    this.man.since = this.getSetting("since") ?? "";
+  }
+  override _getKey(key: string): string {
+    if (!["since", "remote-created", "baseline-remote"].includes(key))
+      return super._getKey(key);
+    const url = new URL(this.config.url);
+    const endpoint = `${url.origin}${url.pathname.replace(/\/+$/, "")}`;
+    return `couchdb-checkpoint:${JSON.stringify([this.config.name, this.config.baseDir, endpoint, this.config.database, key])}`;
   }
   async delete(pathSrc: string): Promise<boolean> {
     if (this.shouldIgnoreRelativePath(pathSrc)) {
