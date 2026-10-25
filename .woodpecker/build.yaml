@@ -1,6 +1,9 @@
 # Canonical LiveSync Bridge validation and private Forgejo image publication.
 # Release candidates pass validation, vulnerability scanning, and signing before promotion.
 when:
+  - event: pull_request
+  - event: push
+    branch: main
   - event: manual
   - event: tag
     ref: refs/tags/v*-ym.*

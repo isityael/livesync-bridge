@@ -540,3 +540,37 @@ it("rejects inconsistent empty content before reservations and checkpoint progre
   ).rejects.toThrow("16 bytes reported");
   expect(dispatch).not.toHaveBeenCalled();
 });
+
+describe("CouchDB checkpoint scope", () => {
+  it("isolates endpoint, peer, base directory and database while ignoring credentials", async () => {
+    const root = await mkdtemp(
+      path.join(tmpdir(), "livesync-checkpoint-scope-"),
+    );
+    try {
+      const first = couchPeer(root, {
+        url: "https://alice:old@ONE.example.test:443/proxy/",
+      });
+      for (const key of ["since", "remote-created", "baseline-remote"]) {
+        const expected = first._getKey(key);
+        expect(
+          couchPeer(root, {
+            url: "https://bob:new@one.example.test/proxy",
+          })._getKey(key),
+        ).toBe(expected);
+        for (const override of [
+          { url: "https://other.example.test/proxy" },
+          { url: "https://one.example.test/other" },
+          { name: "other-peer" },
+          { baseDir: "sub/" },
+          { database: "other" },
+        ]) {
+          expect(couchPeer(root, override)._getKey(key)).not.toBe(expected);
+        }
+        expect(expected).not.toMatch(/alice|bob|old|new/);
+      }
+      expect(first._getKey("unrelated")).toBe("test-couch-couchdb--unrelated");
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+});
