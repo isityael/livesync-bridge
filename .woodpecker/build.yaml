@@ -6,7 +6,7 @@ when:
     ref: refs/tags/v*-ym.*
 
 variables:
-  - &node_image "dhi.io/node:26.12.1-alpine3.24-dev@sha256:c870cbe703c1fd8d3200d33d14b7bafe310423728759b14c002558010b3ca9cb"
+  - &node_image "dhi.io/node:26.12.1-alpine3.24-dev@sha256:0614d22bcdfe1f5fbf985e68b455e61aefba8bc697894a6e91a8542a3e5f26b4"
   - &pnpm_install "corepack enable && pnpm config set store-dir /woodpecker/cache/livesync-bridge/pnpm-store && pnpm install --frozen-lockfile --ignore-scripts"
 
 steps:
@@ -56,7 +56,7 @@ steps:
       sbom: true
 
   - name: scan-candidate
-    image: dhi.io/trivy:0.74.0-alpine3.24-dev@sha256:0ccc6d380d9bbda6de62735e4ff5f210f6f82c6cd82afd01167781f9a0dba053
+    image: dhi.io/trivy:0.74.0-alpine3.24-dev@sha256:c54ed1ca6ed018ca962d95c606458f1540746ac016b98f2f33c1be794ad38b4d
     when:
       - event: tag
     environment:
