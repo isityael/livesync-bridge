@@ -22,6 +22,12 @@ import {
 } from "./lib/src/common/utils.ts";
 import { DurableDirectFileManipulator } from "./runtime/durable_manipulator.ts";
 import { normaliseIdDerivationKey } from "./util.ts";
+import { minimatch } from "minimatch";
+type ResolvedCouchDBPath = {
+  sharedPath: string;
+  databasePath: FilePathWithPrefix;
+  internal: boolean;
+};
 
 export interface PeerRuntimeHooks {
   beginReplay(): void;
@@ -54,6 +60,8 @@ export class PeerCouchDB extends Peer {
     this.config.idDerivationKey = idDerivationKey;
     if (idDerivationKey) this.config.idDerivationVersion ??= 1;
     this.runtime = runtime;
+    this.config.syncInternalFiles =
+      (this.config.includeInternal?.length ?? 0) > 0;
     this.man = manipulator ?? new DurableDirectFileManipulator(conf);
     // Fetch remote since.
     this.man.since = this.getSetting("since") ?? "";
@@ -65,13 +73,105 @@ export class PeerCouchDB extends Peer {
     const endpoint = `${url.origin}${url.pathname.replace(/\/+$/, "")}`;
     return `couchdb-checkpoint:${JSON.stringify([this.config.name, this.config.baseDir, endpoint, this.config.database, key])}`;
   }
+  private _isCanonicalFilePath(path: string): boolean {
+    return (
+      path.length > 0 &&
+      path
+        .split("/")
+        .every((part) => part !== "" && part !== "." && part !== "..")
+    );
+  }
+  private _resolveSharedPath(path: string): ResolvedCouchDBPath | false {
+    if (
+      !this._isCanonicalFilePath(path) ||
+      ["i:", "ix:", "ps:", "h:", "f:"].some((prefix) => path.startsWith(prefix))
+    )
+      return false;
+    if (path.startsWith(".")) {
+      if (
+        !this.config.includeInternal?.some((pattern) =>
+          minimatch(path, pattern, { dot: true }),
+        )
+      )
+        return false;
+      return {
+        sharedPath: path,
+        databasePath: `i:${path}` as FilePathWithPrefix,
+        internal: true,
+      };
+    }
+    const databasePath = this.toLocalPath(path);
+    if (
+      !this._isCanonicalFilePath(databasePath) ||
+      databasePath.startsWith(".")
+    )
+      return false;
+    return {
+      sharedPath: path,
+      databasePath: databasePath as FilePathWithPrefix,
+      internal: false,
+    };
+  }
+  private _resolveMetadataPath(path: string): ResolvedCouchDBPath | false {
+    if (path.startsWith("i:")) {
+      const resolved = this._resolveSharedPath(path.substring(2));
+      return resolved && resolved.internal ? resolved : false;
+    }
+    if (
+      !this._isCanonicalFilePath(path) ||
+      path.startsWith(".") ||
+      path.includes(":")
+    )
+      return false;
+    const baseDir = this.toLocalPath("").replace(/\/+$/, "");
+    if (baseDir && !path.startsWith(`${baseDir}/`)) return false;
+    const sharedPath = baseDir ? path.substring(baseDir.length + 1) : path;
+    const resolved = this._resolveSharedPath(sharedPath);
+    return resolved && !resolved.internal && resolved.databasePath === path
+      ? resolved
+      : false;
+  }
+  private async _canAccessPath(
+    resolved: ResolvedCouchDBPath,
+  ): Promise<boolean> {
+    if (!resolved.internal) return true;
+    const alias = this.toLocalPath(resolved.sharedPath) as FilePathWithPrefix;
+    try {
+      const aliasId = await this.man.path2id(alias);
+      const existing = await this.man.rawGet<{
+        deleted?: boolean;
+        _deleted?: boolean;
+      }>(aliasId);
+      if (!existing || existing.deleted || existing._deleted) return true;
+      this.normalLog(
+        `Internal file blocked: ${resolved.databasePath} (ordinary document ${alias} shares ${resolved.sharedPath})`,
+        LOG_LEVEL_NOTICE,
+      );
+    } catch {
+      this.normalLog(
+        `Internal file blocked: ${resolved.databasePath} (could not inspect ordinary document ${alias})`,
+        LOG_LEVEL_NOTICE,
+      );
+    }
+    return false;
+  }
+  private async _prepareOutgoingPath(
+    path: string,
+  ): Promise<ResolvedCouchDBPath | false> {
+    const resolved = this._resolveSharedPath(path);
+    if (!resolved) return false;
+    await this.man.ready.promise;
+    return (await this._canAccessPath(resolved)) ? resolved : false;
+  }
+
   async delete(pathSrc: string): Promise<boolean> {
     if (this.shouldIgnoreRelativePath(pathSrc)) {
       this.receiveLog(` ${pathSrc} delete ignored`);
       return false;
     }
-    await this.man.ready.promise;
-    const path = this.toLocalPath(pathSrc);
+    const resolved = await this._prepareOutgoingPath(pathSrc);
+    if (!resolved) return false;
+    const path = resolved.databasePath;
     const reservation = await this.reserveChange(pathSrc, false);
     if (reservation.repeating) {
       return true;
@@ -96,8 +196,9 @@ export class PeerCouchDB extends Peer {
       this.receiveLog(` ${pathSrc} save ignored`);
       return false;
     }
-    await this.man.ready.promise;
-    const path = this.toLocalPath(pathSrc);
+    const resolved = await this._prepareOutgoingPath(pathSrc);
+    if (!resolved) return false;
+    const path = resolved.databasePath;
     const reservation = await this.reserveChange(pathSrc, data);
     if (reservation.repeating) {
       return true;
@@ -146,7 +247,9 @@ export class PeerCouchDB extends Peer {
     }
   }
   async get(pathSrc: FilePathWithPrefix): Promise<false | FileData> {
-    const path = this.toLocalPath(pathSrc) as FilePathWithPrefix;
+    const resolved = await this._prepareOutgoingPath(pathSrc);
+    if (!resolved) return false;
+    const path = resolved.databasePath;
     const ret = (await this.man.get(path)) as false | ReadyEntry;
     if (ret === false) {
       return false;
@@ -163,7 +266,9 @@ export class PeerCouchDB extends Peer {
     };
   }
   async getMeta(pathSrc: FilePathWithPrefix): Promise<false | FileData> {
-    const path = this.toLocalPath(pathSrc) as FilePathWithPrefix;
+    const resolved = await this._prepareOutgoingPath(pathSrc);
+    if (!resolved) return false;
+    const path = resolved.databasePath;
     const ret = (await this.man.get(path, true)) as false | MetaEntry;
     if (ret === false) {
       return false;
@@ -177,7 +282,6 @@ export class PeerCouchDB extends Peer {
     };
   }
   async start(): Promise<void> {
-    const baseDir = this.toLocalPath("");
     await this.man.ready.promise;
     const w = await this.man.rawGet<Record<string, any>>(MILESTONE_DOCID);
     const remoteInfo = await this.man.liveSyncLocalDB.localDatabase.info();
@@ -292,13 +396,11 @@ export class PeerCouchDB extends Peer {
     }
 
     const interested = (entry: MetaEntry) => {
-      if (entry.path.indexOf(":") !== -1) return false;
-      if (!entry.path.startsWith(baseDir)) return false;
-      let path = entry.path.substring(baseDir.length);
-      if (path.startsWith("/")) {
-        path = path.substring(1);
-      }
-      return !this.shouldIgnoreRelativePath(path);
+      const resolved = this._resolveMetadataPath(entry.path);
+      return (
+        resolved !== false &&
+        !this.shouldIgnoreRelativePath(resolved.sharedPath)
+      );
     };
     const processEntry = async (
       entry: ReadyEntry & {
@@ -311,27 +413,27 @@ export class PeerCouchDB extends Peer {
         ? entry._conflicts.length
         : 0;
       this.runtime?.recordRemoteActivity(conflicts);
-      const d =
-        entry.type == "plain"
-          ? entry.data
-          : new Uint8Array(decodeBinary(entry.data));
-      let path = entry.path.substring(baseDir.length);
-      if (path.startsWith("/")) {
-        path = path.substring(1);
-      }
-      if (entry.deleted || entry._deleted) {
-        this.sendLog(`${path} delete detected`);
-        await this.dispatchDeleted(path);
-      } else {
-        const docData = {
-          ctime: entry.ctime,
-          mtime: entry.mtime,
-          size: entry.size,
-          deleted: entry.deleted || entry._deleted,
-          data: d,
-        };
-        this.sendLog(`${path} change detected`);
-        await this.dispatch(path, docData);
+      const resolved = this._resolveMetadataPath(entry.path);
+      if (resolved && (await this._canAccessPath(resolved))) {
+        const path = resolved.sharedPath;
+        if (entry.deleted || entry._deleted) {
+          this.sendLog(`${path} delete detected`);
+          await this.dispatchDeleted(path);
+        } else {
+          const d =
+            entry.type == "plain"
+              ? entry.data
+              : new Uint8Array(decodeBinary(entry.data));
+          const docData = {
+            ctime: entry.ctime,
+            mtime: entry.mtime,
+            size: entry.size,
+            deleted: entry.deleted || entry._deleted,
+            data: d,
+          };
+          this.sendLog(`${path} change detected`);
+          await this.dispatch(path, docData);
+        }
       }
       if (seq !== undefined) {
         this.man.since = `${seq}`;
@@ -391,7 +493,7 @@ export class PeerCouchDB extends Peer {
     const reservation = await this.reserveChange(path, data);
     if (!reservation.repeating) {
       try {
-        await this.dispatchToHub(this, this.toGlobalPath(path), data);
+        await this.dispatchToHub(this, path, data);
         reservation.commit();
       } catch (error) {
         reservation.rollback();
@@ -406,7 +508,7 @@ export class PeerCouchDB extends Peer {
     const reservation = await this.reserveChange(path, false);
     if (!reservation.repeating) {
       try {
-        await this.dispatchToHub(this, this.toGlobalPath(path), false);
+        await this.dispatchToHub(this, path, false);
         reservation.commit();
       } catch (error) {
         reservation.rollback();

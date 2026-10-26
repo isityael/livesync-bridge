@@ -287,14 +287,20 @@ export class PeerStorage extends Peer {
       return;
     }
 
-    const data = await this.get(path);
-
-    if (data === false) return;
-
     scheduleOnceIfDuplicated(pathSrc, async () => {
-      // console.log(data);
-      await this.writeFileStat(path);
-      await delay(250);
+      let data: FileData | false;
+      try {
+        await delay(250);
+        data = await this.get(path);
+        if (data !== false) await this.writeFileStat(path);
+      } catch (error) {
+        if (!isNotFoundError(error)) {
+          this.normalLog(`File read failed: ${path}`, LOG_LEVEL_NOTICE);
+          Logger(error, LOG_LEVEL_NOTICE);
+        }
+        return;
+      }
+      if (data === false) return;
       const reservation = await this.reserveChange(path, data);
       if (!reservation.repeating) {
         this.sendLog(`${path} change detected`);

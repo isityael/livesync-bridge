@@ -574,3 +574,109 @@ describe("CouchDB checkpoint scope", () => {
     }
   });
 });
+
+describe("upstream internal-file routing", () => {
+  const data = { ctime: 1, mtime: 1, size: 3, data: ["new"] };
+  it("keeps hidden writes opt-in and blocks ordinary-document aliases", async () => {
+    const root = await mkdtemp(path.join(tmpdir(), "livesync-internal-"));
+    try {
+      const put = vi.fn(async (..._args: unknown[]) => true);
+      const peer = couchPeer(root, {
+        baseDir: "shared/",
+        includeInternal: [".obsidian/**"],
+      });
+      const rawGet = vi.fn(async () => false as false | { deleted: boolean });
+      peer.man = {
+        ready: { promise: Promise.resolve() },
+        path2id: async (value: string) => value,
+        rawGet,
+        get: async () => false,
+        put,
+      } as never;
+      await expect(peer.put(".obsidian/settings.json", data)).resolves.toBe(
+        true,
+      );
+      expect(put.mock.calls[0][0]).toBe("i:.obsidian/settings.json");
+      await expect(peer.put(".private/key", data)).resolves.toBe(false);
+      await expect(peer.put("i:.obsidian/settings.json", data)).resolves.toBe(
+        false,
+      );
+      await expect(peer.put("../outside.md", data)).resolves.toBe(false);
+      rawGet.mockResolvedValue({ deleted: false });
+      await expect(peer.put(".obsidian/collision.json", data)).resolves.toBe(
+        false,
+      );
+      expect(put).toHaveBeenCalledTimes(1);
+      const disabled = couchPeer(root);
+      disabled.man = peer.man;
+      await expect(disabled.put(".obsidian/settings.json", data)).resolves.toBe(
+        false,
+      );
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  it("replays selected internal records at the vault root without leaking sibling namespaces", async () => {
+    const root = await mkdtemp(
+      path.join(tmpdir(), "livesync-internal-replay-"),
+    );
+    try {
+      const peer = couchPeer(root, {
+        baseDir: "shared/",
+        includeInternal: [".obsidian/**"],
+      });
+      const seen: Array<[string, boolean]> = [];
+      peer.dispatchToHub = async (_peer, file, value) => {
+        seen.push([file, value === false]);
+      };
+      const entries = [
+        { ...data, type: "plain", path: "i:.obsidian/selected.json" },
+        { ...data, type: "plain", path: "i:.private/key" },
+        { ...data, type: "plain", path: "shared/folder/note.md" },
+        { ...data, type: "plain", path: "shared-other/leak.md" },
+        { ...data, type: "plain", path: "shared/../escape.md" },
+        {
+          ...data,
+          type: "plain",
+          path: "i:.obsidian/deleted.json",
+          deleted: true,
+        },
+      ];
+      peer.man = {
+        ready: { promise: Promise.resolve() },
+        since: "0",
+        path2id: async (value: string) => value,
+        rawGet: async (id: string) =>
+          id.startsWith("shared/") ? false : { created: "test-database" },
+        liveSyncLocalDB: {
+          localDatabase: {
+            info: async () => ({
+              db_name: "obsidian",
+              doc_count: entries.length,
+            }),
+          },
+        },
+        followUpdates: async (
+          callback: (entry: unknown, seq: string) => Promise<void>,
+          interested: (entry: never) => boolean,
+        ) => {
+          for (const [index, entry] of entries.entries())
+            if (interested(entry as never))
+              await callback(entry, String(index + 1));
+          return "6";
+        },
+        beginWatch: vi.fn(),
+      } as never;
+      await peer.start();
+      expect(seen).toEqual([
+        [".obsidian/selected.json", false],
+        ["folder/note.md", false],
+        [".obsidian/deleted.json", true],
+      ]);
+      expect(peer.getSetting("since")).toBe("6");
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+});
