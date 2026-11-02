@@ -5,33 +5,77 @@
     "config:best-practices",
     ":preserveSemverRanges"
   ],
-  "enabledManagers": ["dockerfile", "github-actions", "woodpecker", "npm"],
+  "enabledManagers": [
+    "dockerfile",
+    "github-actions",
+    "woodpecker",
+    "npm"
+  ],
   "packageRules": [
     {
       "description": "Keep the ESLint compatibility compiler on TypeScript 6",
-      "matchDepNames": ["typescript-eslint-compiler"],
+      "matchDepNames": [
+        "typescript-eslint-compiler"
+      ],
       "enabled": false
     },
     {
-      "matchManagers": ["dockerfile"],
-      "addLabels": ["docker"]
+      "matchManagers": [
+        "dockerfile"
+      ],
+      "addLabels": [
+        "docker"
+      ]
     },
     {
-      "matchManagers": ["github-actions"],
-      "addLabels": ["ci"]
+      "matchManagers": [
+        "github-actions"
+      ],
+      "addLabels": [
+        "ci"
+      ]
     },
     {
       "description": "Group all GitHub Actions into a single PR",
-      "matchManagers": ["github-actions"],
+      "matchManagers": [
+        "github-actions"
+      ],
       "groupName": "github actions"
     },
     {
       "description": "Auto-merge Node package patch and minor updates — low blast radius",
-      "matchManagers": ["npm"],
-      "matchUpdateTypes": ["patch", "minor"],
+      "matchManagers": [
+        "npm"
+      ],
+      "matchUpdateTypes": [
+        "patch",
+        "minor"
+      ],
       "minimumReleaseAge": "2 days",
       "internalChecksFilter": "strict",
       "automerge": true
+    },
+    {
+      "description": "Use container version tags only.",
+      "matchDatasources": [
+        "docker"
+      ],
+      "pinDigests": false
+    },
+    {
+      "description": "Do not create container digest pins or digest refreshes.",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchUpdateTypes": [
+        "digest",
+        "pinDigest"
+      ],
+      "enabled": false
     }
+  ],
+  "pinDigests": false,
+  "ignorePresets": [
+    "docker:pinDigests"
   ]
 }
