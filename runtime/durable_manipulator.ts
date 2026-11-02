@@ -21,6 +21,15 @@ function isNoteEntry(doc: EntryDoc | false): doc is MetaEntry {
 export class DurableDirectFileManipulator extends DirectFileManipulator {
   private watchGeneration = 0;
 
+  override async getByMeta(doc: MetaEntry): Promise<ReadyEntry> {
+    // Tombstones carry deletion metadata; their content chunks may already be
+    // garbage-collected. Replaying them must not try to reconstruct content.
+    if (doc.deleted || (doc as MetaEntry & { _deleted?: boolean })._deleted) {
+      return { ...doc, data: [] };
+    }
+    return super.getByMeta(doc);
+  }
+
   override async followUpdates(
     callback: (
       doc: ReadyEntry,

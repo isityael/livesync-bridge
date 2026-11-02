@@ -1,7 +1,8 @@
 import PouchDB from "pouchdb-core";
 import MemoryAdapter from "pouchdb-adapter-memory";
 import HttpAdapter from "pouchdb-adapter-http";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import type { MetaEntry } from "../lib/src/API/DirectFileManipulatorV2.ts";
 import { DurableDirectFileManipulator } from "../runtime/durable_manipulator.ts";
 
 PouchDB.plugin(MemoryAdapter);
@@ -221,5 +222,55 @@ describe("durable PouchDB changes-feed processing", () => {
 
     expect(failures).toBe(0);
     expect(manipulator.watching).toBe(false);
+  });
+});
+
+describe("tombstone content handling", () => {
+  it.each(["deleted", "_deleted"])(
+    "replays %s tombstones without reading garbage-collected chunks",
+    async (flag) => {
+      const read = vi.fn().mockRejectedValue(new Error("missing chunk"));
+      const manipulator = Object.create(
+        DurableDirectFileManipulator.prototype,
+      ) as DurableDirectFileManipulator;
+      Object.assign(manipulator, {
+        liveSyncLocalDB: { getDBEntryFromMeta: read },
+      });
+      const entry = {
+        _id: "retired-note",
+        path: "retired-note.md",
+        type: "plain" as const,
+        children: ["missing-chunk"],
+        ctime: 1,
+        mtime: 2,
+        size: 100,
+        [flag]: true,
+      };
+      const result = await manipulator.getByMeta(entry as unknown as MetaEntry);
+      expect(result).toMatchObject({ ...entry, data: [] });
+      expect(read).not.toHaveBeenCalled();
+    },
+  );
+
+  it("still rejects an active note whose content cannot be reconstructed", async () => {
+    const read = vi.fn().mockResolvedValue(false);
+    const manipulator = Object.create(
+      DurableDirectFileManipulator.prototype,
+    ) as DurableDirectFileManipulator;
+    Object.assign(manipulator, {
+      liveSyncLocalDB: { getDBEntryFromMeta: read },
+    });
+    await expect(
+      manipulator.getByMeta({
+        _id: "active-note",
+        path: "active-note.md",
+        type: "plain",
+        children: ["missing-chunk"],
+        ctime: 1,
+        mtime: 2,
+        size: 100,
+      } as MetaEntry),
+    ).rejects.toThrow("Corrupted document: active-note.md");
+    expect(read).toHaveBeenCalledOnce();
   });
 });
