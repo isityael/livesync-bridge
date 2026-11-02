@@ -21,6 +21,8 @@ export interface PeerStorageConf {
   ignore?: string[];
 }
 export interface PeerCouchDBConf extends DirectFileManipulatorOptions {
+  /** Vault-root glob patterns for hidden i: files selected in both directions. */
+  includeInternal?: string[];
   type: "couchdb";
   useRemoteTweaks?: true;
   group?: string;

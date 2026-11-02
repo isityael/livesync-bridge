@@ -104,7 +104,9 @@ baseline and per-checkpoint tombstone budget. Additional controls are:
 
 # Configuration
 
-The configuration file consists of the following structure.
+The configuration file consists of the following structure. The basic example
+below leaves hidden-file synchronisation disabled. To opt in, see
+[Synchronising internal/hidden files](#synchronising-internalhidden-files).
 
 ```jsonc
 {
@@ -157,6 +159,36 @@ The configuration file consists of the following structure.
 }
 ```
 
+## Filesystem watcher limitations
+
+The upstream Deno runtime uses `Deno.watchFs` by default. This fork uses Node and Chokidar; upstream setting `useChokidar` to `true`
+selects Chokidar instead.
+
+On Windows, renaming a watched directory containing subdirectories can fail
+with an access-denied error when Chokidar uses its default event-based watching.
+This includes changing only the letter case of a directory name and moving it
+to another name in the same parent directory. This restriction affects normal use while the bridge is
+running, including filesystem operations initiated outside the bridge.
+Treat these directory-tree renames as unsupported with Chokidar's default
+watching mode on Windows.
+
+Chokidar also offers polling through the `CHOKIDAR_USEPOLLING=true` environment
+variable. This periodically checks filesystem state and can increase CPU use.
+Its behaviour for these directory renames has not been verified in the bridge
+on Windows. See the [Chokidar 3.6 options](https://github.com/paulmillr/chokidar/blob/3.6.0/README.md#performance)
+for the polling intervals and other trade-offs.
+
+See the [upstream Chokidar report](https://github.com/paulmillr/chokidar/issues/1380)
+and Microsoft's [directory rename constraints](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/ntifs/ns-ntifs-_file_rename_information).
+The default `Deno.watchFs` backend can report a directory being created or
+renamed without reporting changes to files inside it. A file written
+immediately after its directory is created, or a child file at its new path
+after an ordinary or case-only directory rename, can therefore be missed while the
+bridge is running. These behaviours were reproducible on Linux before the
+internal-file synchronisation change. Switching to Chokidar does not guarantee
+that all child-event gaps are resolved; its Windows directory-rename
+restriction is described above.
+
 ## Vaults with an ID key
 
 Recent versions of Self-hosted LiveSync derive chunk IDs and obfuscated document IDs from a separate ID key. New vaults with E2EE get a random ID key by default. The bridge needs the same key, or the plugin cannot read the files the bridge writes. It then reports that not all files could be synchronised.
@@ -176,6 +208,70 @@ Copy the key on any device with **Show current recovery code** in the plugin set
 ```
 
 With a key configured, the bridge uses ID derivation version 1 unless `idDerivationVersion` says otherwise. Keep the key private, like the passphrase.
+
+## Synchronising internal/hidden files
+
+This fork includes the bidirectional routing change; it remains opt-in.
+
+Hidden-file synchronisation is optional and disabled by default. For each
+CouchDB peer, `includeInternal` enables synchronisation only for matching hidden
+files, in both directions. Omit the field or use `[]` to keep it disabled.
+
+Self-hosted LiveSync stores internal documents with an `i:` prefix. The bridge
+supports hidden files whose first Vault-root path component begins with a dot,
+such as `.claude/settings.json` or `.settings.json`.
+
+Set `includeInternal` to an array of
+[minimatch](https://github.com/isaacs/minimatch) glob patterns matched against the
+complete Vault-root path after removing the `i:` prefix. The following example
+enables synchronisation for `.claude/` only:
+
+```jsonc
+{
+  "type": "couchdb",
+  "name": "test1",
+  // ...
+  "baseDir": "blog/",
+  "includeInternal": [".claude/**"], // Share selected .claude files in both directions
+}
+```
+
+A hidden file is included when its path matches any pattern. Patterns use the
+`dot` option, so hidden subdirectories are matched too. A broad pattern such as
+`**` still leaves ordinary notes on their ordinary route. Other internal paths,
+such as `i:note.md`, are outside this feature.
+
+Internal paths are relative to the Vault root, independently of `baseDir`.
+The example selects ordinary documents below `blog/` and internal files below
+`.claude/` at the Vault root. The internal document
+`i:.claude/settings.json` maps to `.claude/settings.json` below the storage
+peer's root. Local creation, edits, and deletion use that same internal document
+on the return route, including after restart.
+
+Each CouchDB peer applies its own `includeInternal` patterns in both directions.
+Opting one peer in does not enable another peer. Each Obsidian client that
+should synchronise these files also needs hidden-file synchronisation enabled
+in its own LiveSync settings. An excluded hidden file has no ordinary fallback
+route. Storage peers' sending exclusions remain separate; see
+[Excluding paths from a storage peer](#excluding-paths-from-a-storage-peer).
+
+On CouchDB peers, shared paths beginning with a dot are reserved for this
+internal route. Ordinary documents such as `blog/.claude/settings.json` are
+excluded, and a hidden Vault-root folder cannot serve as an ordinary sharing
+folder. Before using an internal path, the bridge checks for a live ordinary
+document at `baseDir` joined with that shared path. If one exists, the bridge
+reports both paths and blocks the internal operation, preserving both documents
+and any existing storage file. A failed collision check also blocks the
+operation. A deleted ordinary document does not block it. The bridge does not
+merge, migrate, or delete conflicting documents automatically.
+
+Changing `includeInternal` or resolving a collision does not replay previously
+skipped changes. A later source change can trigger synchronisation. To rescan
+existing files, restart with `--reset`; this clears the stored scan and resume
+state for all peers.
+
+> [!CAUTION]
+> This synchronises files that are normally hidden and internal. Such folders often hold tool configuration that can contain machine-specific paths, local settings, or secrets. Only include patterns you genuinely intend to share, and review what they match before enabling. The option is opt-in: leave it out to keep the default behaviour, where all internal/hidden files are skipped.
 
 ## Excluding paths from a storage peer
 
@@ -331,3 +427,8 @@ Windows separators, empty payloads, repeat keys and watcher shutdown. An invalid
 empty CouchDB payload throws before checkpoint advancement so durable replay can
 retry it safely. The real manipulator initialization smoke uses a mocked CouchDB
 transport; this is not a live Vault restore test.
+
+## Developer documentation
+
+- [Internal-file synchronisation design](docs/design_docs/internal_file_synchronisation.md)
+- [Internal-file synchronisation ADR](docs/adr/2026_10_internal_file_synchronisation.md)

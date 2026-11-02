@@ -486,3 +486,20 @@ describe("upstream storage ignore and deletion semantics on Node", () => {
     }
   });
 });
+
+it("reads the latest file contents after coalescing a queued watcher event", async () => {
+  const root = await mkdtemp(path.join(tmpdir(), "livesync-watcher-race-"));
+  try {
+    const seen: string[] = [];
+    const peer = storagePeer(root, async (_peer, _path, data) => {
+      if (data !== false) seen.push((data.data as string[]).join(""));
+    });
+    const file = path.join(root, "note.md");
+    await writeFile(file, "stale");
+    await peer.dispatch(file);
+    await writeFile(file, "current");
+    await vi.waitFor(() => expect(seen).toEqual(["current"]));
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
