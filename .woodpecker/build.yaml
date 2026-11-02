@@ -9,7 +9,7 @@ when:
     ref: refs/tags/v*-ym.*
 
 variables:
-  - &node_image "dhi.io/node:26.12.1-alpine3.24-dev"
+  - &node_image "dhi.io/node:26.13.0-alpine3.24-dev"
   - &pnpm_install "corepack enable && pnpm config set store-dir /woodpecker/cache/livesync-bridge/pnpm-store && pnpm install --frozen-lockfile --ignore-scripts"
 
 steps:
@@ -71,7 +71,7 @@ steps:
       - trivy image --exit-code 1 --severity HIGH,CRITICAL --ignore-unfixed "git.m0sh1.cc/m0sh1-internal/livesync-bridge:candidate-$${CI_COMMIT_SHA}"
 
   - name: sign-candidate
-    image: dhi.io/cosign:3.1.3-alpine3.24-dev
+    image: dhi.io/cosign:3.1.4-alpine3.24-dev
     when:
       - event: tag
     environment:
