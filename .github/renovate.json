@@ -5,72 +5,43 @@
     "config:best-practices",
     ":preserveSemverRanges"
   ],
-  "enabledManagers": [
-    "dockerfile",
-    "github-actions",
-    "woodpecker",
-    "npm"
-  ],
+  "enabledManagers": ["dockerfile", "github-actions", "woodpecker", "npm"],
   "packageRules": [
     {
       "description": "Keep the ESLint compatibility compiler on TypeScript 6",
-      "matchDepNames": [
-        "typescript-eslint-compiler"
-      ],
+      "matchDepNames": ["typescript-eslint-compiler"],
       "enabled": false
     },
     {
-      "matchManagers": [
-        "dockerfile"
-      ],
-      "addLabels": [
-        "docker"
-      ]
+      "matchManagers": ["dockerfile"],
+      "addLabels": ["docker"]
     },
     {
-      "matchManagers": [
-        "github-actions"
-      ],
-      "addLabels": [
-        "ci"
-      ]
+      "matchManagers": ["github-actions"],
+      "addLabels": ["ci"]
     },
     {
       "description": "Auto-merge Node package patch and minor updates \u2014 low blast radius",
-      "matchManagers": [
-        "npm"
-      ],
-      "matchUpdateTypes": [
-        "patch",
-        "minor"
-      ],
+      "matchManagers": ["npm"],
+      "matchUpdateTypes": ["patch", "minor"],
       "minimumReleaseAge": "2 days",
       "internalChecksFilter": "strict",
       "automerge": true
     },
     {
       "description": "Use container version tags only.",
-      "matchDatasources": [
-        "docker"
-      ],
+      "matchDatasources": ["docker"],
       "pinDigests": false
     },
     {
       "description": "Do not create container digest pins or digest refreshes.",
-      "matchDatasources": [
-        "docker"
-      ],
-      "matchUpdateTypes": [
-        "digest",
-        "pinDigest"
-      ],
+      "matchDatasources": ["docker"],
+      "matchUpdateTypes": ["digest", "pinDigest"],
       "enabled": false
     },
     {
       "description": "One reviewed weekly dependency refresh, including majors, charts, images and tooling.",
-      "matchPackageNames": [
-        "*"
-      ],
+      "matchPackageNames": ["*"],
       "groupName": "weekly dependencies",
       "groupSlug": "weekly-dependencies",
       "groupSingleUpdates": true,
@@ -80,20 +51,14 @@
       "separateMinorPatch": false,
       "separateMultipleMajor": false,
       "separateMultipleMinor": false,
-      "schedule": [
-        "* 0-5 * * 1"
-      ],
+      "schedule": ["* 0-5 * * 1"],
       "automerge": false
     }
   ],
   "pinDigests": false,
-  "ignorePresets": [
-    "docker:pinDigests"
-  ],
+  "ignorePresets": ["docker:pinDigests"],
   "timezone": "Europe/Berlin",
-  "schedule": [
-    "* 0-5 * * 1"
-  ],
+  "schedule": ["* 0-5 * * 1"],
   "separateMajorMinor": false,
   "separateMinorPatch": false,
   "separateMultipleMajor": false,
